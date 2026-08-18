@@ -27,24 +27,24 @@ test("splitOutputFiles: 绝对路径保留", () => {
   assert.equal(files[1], join(DIR, "rel/b.html"));
 });
 
-test("validateFiles: 多文件全存在 → pass", () => {
+test("validateFiles: 多文件全存在 → pass", async () => {
   writeFileSync(join(DIR, "m1.html"), "<h1>1</h1>");
   writeFileSync(join(DIR, "m2.css"), "body{}");
-  const r = validateFiles("m1.html, m2.css", DIR);
+  const r = await validateFiles("m1.html, m2.css", DIR);
   assert.equal(r.passed, true);
 });
 
-test("validateFiles: 多文件其中一个不存在 → fail 含该文件路径", () => {
+test("validateFiles: 多文件其中一个不存在 → fail 含该文件路径", async () => {
   writeFileSync(join(DIR, "ok.html"), "<h1>x</h1>");
-  const r = validateFiles("ok.html, missing.html", DIR);
+  const r = await validateFiles("ok.html, missing.html", DIR);
   assert.equal(r.passed, false);
   assert.ok(r.detail?.includes("missing.html"));
 });
 
-test("validateFiles: 默认规则(无TODO)对多文件生效", () => {
+test("validateFiles: 默认规则(无TODO)对多文件生效", async () => {
   writeFileSync(join(DIR, "good.html"), "<h1>ok</h1>");
   writeFileSync(join(DIR, "bad.html"), "TODO later");
-  const r = validateFiles("good.html, bad.html", DIR);
+  const r = await validateFiles("good.html, bad.html", DIR);
   assert.equal(r.passed, false);
   assert.ok(r.detail?.includes("bad.html"));
 });

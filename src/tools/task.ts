@@ -9,7 +9,7 @@ import { status } from "./status.js";
 import { validateFile, validateFiles, splitOutputFiles } from "../runner/validate.js";
 import { buildStagePrompt, buildReviewPrompt } from "./stage-prompt.js";
 import { Errors } from "../errors.js";
-import type { Task, Stage, StageAttempt, StageCreateInput, ManualPanel, Constraints, Snapshot } from "../types.js";
+import type { Task, Stage, StageAttempt, StageCreateInput, ManualPanel, Constraints, Snapshot, StageRunInput } from "../types.js";
 
 export interface TaskDeps {
   tasks: TaskRegistry;
@@ -30,6 +30,35 @@ export function taskCreate(
   const draftAbs = isAbsolute(input.planDraftPath) ? input.planDraftPath : join(input.cwd, input.planDraftPath);
   if (!existsSync(draftAbs)) throw Errors.planDraftMissing(input.planDraftPath);
   if (input.stages.length === 0) throw Errors.invalidArg("stages must not be empty");
+
+  // 恢复语义：同 taskId 已存在（如重启后残留）→ 合并 stages 而非冲突。
+  // 对每个已存在 stage：若其 outputFile 已存在且通过验收 → 标 passed（文件其实写完了，
+  // 只是中断时状态没落盘），host 可续跑剩余阶段，不必手改 tasks.json。
+  const existing = deps.tasks.get(input.taskId);
+  if (existing) {
+    for (const newStage of input.stages) {
+      const old = existing.stages.find((s) => s.stageId === newStage.stageId);
+      if (!old) continue;
+      if (old.status === "passed" || old.status === "skipped") continue;
+      // 仅对中断（interrupted_by_restart）尝试恢复，不覆盖真实失败
+      const interrupted = old.attempts.some((a) => a.failureType === "interrupted_by_restart");
+      if (!interrupted && old.status !== "failed") continue;
+      if (!newStage.outputFile) continue;
+      const outAbs = isAbsolute(newStage.outputFile) ? newStage.outputFile : join(input.cwd, newStage.outputFile);
+      if (existsSync(outAbs) && statSync(outAbs).isFile()) {
+        deps.tasks.setStageStatus(input.taskId, newStage.stageId, "passed");
+        deps.tasks.setStageSession(input.taskId, newStage.stageId, old.session);
+      }
+    }
+    const task = deps.tasks.get(input.taskId)!;
+    if (deps.tasks.allStagesPassed(input.taskId)) {
+      deps.tasks.setTaskStatus(input.taskId, "completed");
+    } else if (task.status === "planning") {
+      deps.tasks.setTaskStatus(input.taskId, "planning");
+    }
+    deps.onTaskChange?.();
+    return { task };
+  }
 
   const task = deps.tasks.create({
     taskId: input.taskId,
@@ -84,6 +113,10 @@ export async function taskPlan(
     deps as DelegateDeps,
   );
 
+  // 记录 reviewRunId：host 之后用 pi_status(runId) 收割；收割完成后 server 层
+  // 会检测 runId 是否匹配某 task 的 reviewRunId，匹配则自动调 applyReviewResult 解析 verdict。
+  deps.tasks.setReviewRunId(input.taskId, r.runId);
+
   return { runId: r.runId, task: deps.tasks.get(input.taskId)! };
 }
 
@@ -108,18 +141,12 @@ export function applyReviewResult(taskId: string, runId: string, deps: TaskDeps)
 
 // ============ pi_task_stage_run（核心）============
 export async function taskStageRun(
-  input: {
-    taskId: string;
-    stageId: string;
-    constraints?: Constraints;
-    stallTimeoutMs?: number;
-    runTimeoutMs?: number;
-    maxAttempts?: number;
-  },
+  input: StageRunInput,
   deps: TaskDeps,
 ): Promise<{
   stage: Stage;
-  outcome: "passed" | "manual";
+  outcome?: "passed" | "manual" | "running";
+  runId?: string;          // async 模式：返回 runId，host 用 stage_collect 收割
   attempts: StageAttempt[];
   manualPanel?: ManualPanel;
 }> {
@@ -135,24 +162,172 @@ export async function taskStageRun(
   });
   if (unmet.length > 0) throw Errors.dependencyUnmet(stage.stageId, unmet);
 
-  // 状态检查：pending/failed/manual 才能跑；passed/skipped 不重复
+  // 状态检查：passed/skipped 不重复
   if (stage.status === "passed" || stage.status === "skipped") {
     return { stage, outcome: "passed", attempts: stage.attempts };
   }
 
+  // manual 状态允许带 promptHintOverride 重试（面板 retry_with_new_hint 落地）
+  const hintOverride = input.promptHintOverride;
   const maxAttempts = input.maxAttempts ?? 3;
   // 批次2: 默认禁 skill（防联网诱导），保留 bash 让 Pi 写文件
   const constraints = input.constraints ?? { noSkills: true, noContextFiles: true };
-  const sessionName = stage.session ?? `${input.taskId}-${input.stageId}`;
-  deps.tasks.setStageStatus(input.taskId, input.stageId, "running", sessionName);
 
-  for (let attemptNo = 1; attemptNo <= maxAttempts; attemptNo++) {
+  // 标记任务进入执行态（planning → executing）
+  if (task.status === "planning") deps.tasks.setTaskStatus(input.taskId, "executing");
+
+  // async 模式：只发起第一次 delegate，返回 runId；判定/重试交给 stage_collect
+  if (input.mode === "async") {
+    // 已有一个在跑的 run（上次 async 发起未收割）→ 返回既有 run
+    if (stage.currentRunId && deps.runs.get(stage.currentRunId)?.status === "running") {
+      return { stage, outcome: "running", runId: stage.currentRunId, attempts: stage.attempts };
+    }
+    const attemptNo = (stage.attempts.at(-1)?.attemptNo ?? 0) + 1;
+    const sessionName = `${input.taskId}-${input.stageId}-a${attemptNo}`;
+    deps.tasks.setStageStatus(input.taskId, input.stageId, "running", sessionName);
+    const r = await delegate(
+      {
+        prompt: buildStagePrompt(stage, task, attemptNo, lastFailureOf(stage), hintOverride),
+        session: sessionName,
+        cwd: task.cwd,
+        goal: `${task.taskId} / ${stage.stageId}: ${stage.objective}`,
+        mode: "async",
+        constraints,
+        stallTimeoutMs: input.stallTimeoutMs,
+        runTimeoutMs: input.runTimeoutMs,
+      },
+      deps as DelegateDeps,
+    );
+    // 记录 currentRunId 供 stage_collect 收割
+    deps.tasks.setStageCurrentRunId(input.taskId, input.stageId, r.runId);
+    return { stage: deps.tasks.getStage(input.taskId, input.stageId)!, outcome: "running", runId: r.runId, attempts: stage.attempts };
+  }
+
+  // sync 模式（默认）：完整跑完重试循环，返回 outcome
+  const result = await runStageAttempts(
+    input, deps, task, stage, hintOverride, maxAttempts, constraints,
+  );
+  return result;
+}
+
+// 收割并判定一次已发起的 stage run（async 模式配套；也供 sync 内部用）
+export async function taskStageCollect(
+  input: { taskId: string; stageId: string; waitTimeoutMs?: number },
+  deps: TaskDeps,
+): Promise<{
+  stage: Stage;
+  outcome?: "passed" | "manual" | "running";
+  runId?: string;          // 自动重派后返回新 runId
+  attempts: StageAttempt[];
+  manualPanel?: ManualPanel;
+}> {
+  const task = deps.tasks.get(input.taskId);
+  if (!task) throw Errors.taskNotFound(input.taskId);
+  const stage = task.stages.find((s) => s.stageId === input.stageId);
+  if (!stage) throw Errors.stageNotFound(input.taskId, input.stageId);
+
+  if (stage.status !== "running") {
+    // 没有在跑 → 按当前状态返回（passed 直接返回）
+    return { stage, outcome: stage.status === "passed" ? "passed" : stage.status === "manual" ? "manual" : undefined, attempts: stage.attempts };
+  }
+
+  const lastRunId = stage.currentRunId ?? stage.attempts.at(-1)?.runId;
+  if (!lastRunId) throw Errors.invalidArg(`stage ${input.stageId} has no run to collect`);
+
+  const waitMs = Math.min(input.waitTimeoutMs ?? 25000, 28000);
+  const run = await deps.runs.waitForCompletion(lastRunId, waitMs);
+  if (!run || run.status === "running") {
+    // 还没完 → 仍是 running
+    return { stage, outcome: "running", attempts: stage.attempts };
+  }
+
+  // run 已完成 → 判定 + 可能需要重试
+  const maxAttempts = 3;
+  const constraints = { noSkills: true, noContextFiles: true };
+  const verdict = await judgeAttempt(run, stage.outputFile ?? "", task.cwd, stage);
+  const attempt: StageAttempt = {
+    attemptNo: (stage.attempts.at(-1)?.attemptNo ?? 0) + 1,
+    runId: run.runId,
+    status: verdict.passed ? "passed" : "failed",
+    failureType: verdict.passed ? undefined : verdict.failureType,
+    failureDetail: verdict.passed ? "" : verdict.detail,
+    ts: Date.now(),
+  };
+  deps.tasks.addAttempt(input.taskId, input.stageId, attempt);
+
+  if (verdict.passed) {
+    deps.tasks.setStageCurrentRunId(input.taskId, input.stageId, undefined);
+    deps.tasks.setStageStatus(input.taskId, input.stageId, "passed");
+    if (deps.tasks.allStagesPassed(input.taskId)) deps.tasks.setTaskStatus(input.taskId, "completed");
+    deps.onTaskChange?.();
+    return { stage: deps.tasks.getStage(input.taskId, input.stageId)!, outcome: "passed", attempts: stage.attempts };
+  }
+
+  // 失败：继续发下一次（新 session 名防历史混入）
+  const attemptNo = attempt.attemptNo + 1;
+  if (attemptNo <= maxAttempts) {
+    deps.tasks.setStageCurrentRunId(input.taskId, input.stageId, undefined);
+    deps.tasks.setStageStatus(input.taskId, input.stageId, "running", `${input.taskId}-${input.stageId}-a${attemptNo}`);
+    const r = await delegate(
+      {
+        prompt: buildStagePrompt(stage, task, attemptNo, { failureType: attempt.failureType!, failureDetail: attempt.failureDetail }),
+        session: `${input.taskId}-${input.stageId}-a${attemptNo}`,
+        cwd: task.cwd,
+        goal: `${task.taskId} / ${input.stageId}: ${stage.objective}`,
+        mode: "async",
+        constraints,
+      },
+      deps as DelegateDeps,
+    );
+    deps.tasks.setStageCurrentRunId(input.taskId, input.stageId, r.runId);
+    return { stage: deps.tasks.getStage(input.taskId, input.stageId)!, outcome: "running", runId: r.runId, attempts: stage.attempts };
+  }
+
+  // 超过 maxAttempts → manual
+  deps.tasks.setStageCurrentRunId(input.taskId, input.stageId, undefined);
+  deps.tasks.setStageStatus(input.taskId, input.stageId, "manual");
+  deps.tasks.setTaskStatus(input.taskId, "blocked_manual");
+  deps.onTaskChange?.();
+  const lastRun = stage.attempts.at(-1);
+  const lastResult = lastRun ? deps.runs.get(lastRun.runId)?.result : undefined;
+  const panel: ManualPanel = {
+    taskId: input.taskId,
+    stageId: input.stageId,
+    attempts: stage.attempts,
+    lastPiResult: lastResult ? lastResult.slice(0, 500) : undefined,
+    availableFiles: [
+      task.planDraftPath,
+      ...(task.planReviewedPath ? [task.planReviewedPath] : []),
+      ...stage.inputFiles,
+    ],
+    options: ["retry_with_new_hint", "skip", "abort_task", "manual_write"],
+  };
+  return { stage: deps.tasks.getStage(input.taskId, input.stageId)!, outcome: "manual", attempts: stage.attempts, manualPanel: panel };
+}
+
+// sync 模式的完整重试循环
+async function runStageAttempts(
+  input: StageRunInput,
+  deps: TaskDeps,
+  task: Task,
+  stage: Stage,
+  hintOverride: string | undefined,
+  maxAttempts: number,
+  constraints: Constraints,
+): Promise<{ stage: Stage; outcome: "passed" | "manual"; attempts: StageAttempt[]; manualPanel?: ManualPanel }> {
+  // 已有 attempts（如 manual 后重试）→ attemptNo 接续，不重置
+  const baseAttemptNo = stage.attempts.at(-1)?.attemptNo ?? 0;
+  for (let attemptNo = baseAttemptNo + 1; attemptNo <= baseAttemptNo + maxAttempts; attemptNo++) {
     const lastAtt = attemptNo > 1 ? stage.attempts.at(-1) : undefined;
     const prevFailure = lastAtt && lastAtt.failureType
       ? { failureType: lastAtt.failureType, failureDetail: lastAtt.failureDetail }
       : undefined;
 
-    const prompt = buildStagePrompt(stage, task, attemptNo, prevFailure);
+    // 每次 attempt 用新 session 名（skill: 重派用新 session 防历史 progress 混入）
+    const sessionName = `${input.taskId}-${input.stageId}-a${attemptNo}`;
+    deps.tasks.setStageStatus(input.taskId, input.stageId, "running", sessionName);
+
+    const prompt = buildStagePrompt(stage, task, attemptNo, prevFailure, hintOverride);
 
     const r = await delegate(
       {
@@ -172,7 +347,7 @@ export async function taskStageRun(
     const done = await deps.runs.waitForCompletion(r.runId, (input.runTimeoutMs ?? 600000) + 10000);
 
     // 判定 + 验收（多文件 outputFile 支持逗号分隔，P0 问题2）
-    const verdict = judgeAttempt(done, stage.outputFile ?? "", task.cwd, stage);
+    const verdict = await judgeAttempt(done, stage.outputFile ?? "", task.cwd, stage);
     const attempt: StageAttempt = {
       attemptNo,
       runId: r.runId,
@@ -217,13 +392,18 @@ export async function taskStageRun(
   return { stage: deps.tasks.getStage(input.taskId, input.stageId)!, outcome: "manual", attempts: stage.attempts, manualPanel: panel };
 }
 
+function lastFailureOf(stage: Stage): { failureType: StageAttempt["failureType"]; failureDetail: string } | undefined {
+  const last = stage.attempts.at(-1);
+  return last && last.failureType ? { failureType: last.failureType, failureDetail: last.failureDetail } : undefined;
+}
+
 // 判定单次 attempt：综合 run 终态 + 文件验收（支持多文件 outputFile）
-function judgeAttempt(
+async function judgeAttempt(
   done: { status?: string; error?: { code?: string }; result?: string } | undefined,
   outputSpec: string,
   cwd: string,
   stage: Stage,
-): { passed: boolean; failureType?: StageAttempt["failureType"]; detail: string } {
+): Promise<{ passed: boolean; failureType?: StageAttempt["failureType"]; detail: string }> {
   // run 异常
   if (done?.status === "timeout") {
     return { passed: false, failureType: "timeout", detail: "run timed out" };
@@ -239,7 +419,7 @@ function judgeAttempt(
     }
   }
   // 文件验收（多文件：逗号/分号分隔，每个独立检查）
-  const v = validateFiles(outputSpec, cwd, stage.validateRules);
+  const v = await validateFiles(outputSpec, cwd, stage.validateRules);
   if (v.passed) return { passed: true, detail: "ok" };
   // 文件问题归类
   const files = splitOutputFiles(outputSpec, cwd);

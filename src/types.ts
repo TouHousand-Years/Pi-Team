@@ -150,7 +150,7 @@ export interface StageAttempt {
   attemptNo: number;           // 1..3
   runId: string;
   status: "passed" | "failed";
-  failureType?: "no_output" | "incomplete" | "wrong_content" | "timeout" | "stalled" | "pi_refused";
+  failureType?: "no_output" | "incomplete" | "wrong_content" | "timeout" | "stalled" | "pi_refused" | "interrupted_by_restart";
   failureDetail: string;
   ts: number;
 }
@@ -167,6 +167,7 @@ export interface Stage {
   validateRules?: ValidateRule[];  // 无则用默认
   status: "pending" | "running" | "passed" | "failed" | "manual" | "skipped";
   session?: string;            // 执行 session 名
+  currentRunId?: string;       // async 模式：正在跑的 runId（stage_collect 收割用），判定后清除
   attempts: StageAttempt[];
   lastFailureReason?: string;
 }
@@ -214,5 +215,17 @@ export interface StageCreateInput {
   parallelizable?: boolean;
   promptHint?: string;
   validateRules?: ValidateRule[];
+}
+
+// stage_run 输入：host 可覆盖 hint 重试（manual 面板 retry_with_new_hint 落地）
+export interface StageRunInput {
+  taskId: string;
+  stageId: string;
+  constraints?: Constraints;
+  stallTimeoutMs?: number;
+  runTimeoutMs?: number;
+  maxAttempts?: number;
+  mode?: "sync" | "async";        // sync=等完成返回 outcome（默认）；async=立即返回 runId，用 stage_collect 收割
+  promptHintOverride?: string;    // 覆盖 stage.promptHint（manual 面板 retry_with_new_hint 用）
 }
 

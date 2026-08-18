@@ -58,6 +58,35 @@ test("buildStagePrompt 含禁联网 + promptHint", () => {
   assert.ok(p.includes("scale=1/sqrt(dk)"), "promptHint 注入");
 });
 
+test("buildStagePrompt 自动注入 dependsOn 已通过阶段的 outputFile", () => {
+  const task = makeTask({
+    stages: [
+      { stageId: "1", title: "a", objective: "o", inputFiles: [], outputFile: "01-base.html", dependsOn: [], parallelizable: true, status: "passed", attempts: [] },
+      { stageId: "2", title: "b", objective: "o", inputFiles: [], outputFile: "02-scaled.html", dependsOn: ["1"], parallelizable: true, status: "pending", attempts: [] },
+    ],
+  });
+  const stage = task.stages[1];
+  const p = buildStagePrompt(stage, task, 1);
+  assert.ok(p.includes("/proj/01-base.html"), "依赖阶段的 outputFile 注入输入");
+});
+
+test("buildStagePrompt promptHintOverride 覆盖 stage.promptHint", () => {
+  const p = buildStagePrompt(
+    makeStage({ promptHint: "原始 hint" }),
+    makeTask(),
+    1,
+    undefined,
+    "覆盖后的 hint：先写骨架",
+  );
+  assert.ok(p.includes("覆盖后的 hint：先写骨架"), "override 生效");
+  assert.ok(!p.includes("原始 hint"), "原 hint 被覆盖");
+});
+
+test("buildStagePrompt 无输入文件时提示 ls 探索", () => {
+  const p = buildStagePrompt(makeStage({ inputFiles: [] }), makeTask(), 1);
+  assert.ok(p.includes("无显式输入文件"), "无输入提示");
+});
+
 test("buildStagePrompt attempt>1 含升级指令", () => {
   const p = buildStagePrompt(makeStage(), makeTask(), 2,
     { failureType: "no_output", failureDetail: "文件未生成" });

@@ -92,6 +92,14 @@ export class TaskRegistry {
     }
   }
 
+  setReviewRunId(taskId: string, runId: string): void {
+    const t = this.map.get(taskId);
+    if (t) {
+      t.reviewRunId = runId;
+      this.touch(taskId);
+    }
+  }
+
   // stage 状态变更
   setStageStatus(taskId: string, stageId: string, status: Stage["status"], session?: string): void {
     const t = this.map.get(taskId);
@@ -99,6 +107,24 @@ export class TaskRegistry {
     if (!t || !s) return;
     s.status = status;
     if (session) s.session = session;
+    this.touch(taskId);
+  }
+
+  // 仅更新 stage 的 session 名（恢复路径用，不改状态）
+  setStageSession(taskId: string, stageId: string, session?: string): void {
+    const t = this.map.get(taskId);
+    const s = t?.stages.find((x) => x.stageId === stageId);
+    if (!t || !s || !session) return;
+    s.session = session;
+    this.touch(taskId);
+  }
+
+  // async 模式：记录/清除正在跑的 runId
+  setStageCurrentRunId(taskId: string, stageId: string, runId: string | undefined): void {
+    const t = this.map.get(taskId);
+    const s = t?.stages.find((x) => x.stageId === stageId);
+    if (!t || !s) return;
+    s.currentRunId = runId;
     this.touch(taskId);
   }
 

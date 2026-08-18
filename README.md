@@ -55,6 +55,17 @@ Three layers with clear boundaries: **Tool layer** (MCP schema + `plan()` pure f
 | `pi_session_snapshot` | Inspect one session |
 | `pi_session_fork` | Branch a session to try another path |
 | `pi_kill` | Abort a run |
+| `pi_task_create` | Create a multi-stage task (host writes `_plan-draft.md` first) |
+| `pi_task_plan` | Dispatch a domain review of the plan (harvest via `pi_status`, verdict auto-parsed) |
+| `pi_task_stage_run` | Run one stage: sync (wait for outcome) or async (returns runId) |
+| `pi_task_stage_collect` | Harvest an async stage run; auto-judges and re-dispatches (max 3), else manual |
+| `pi_task_list` | List tasks (filter by taskId / status) |
+
+> **Review loop**: after `pi_task_plan`, harvest with `pi_status(runId)`. When the run finishes, the server detects it is a review run, parses `_plan-reviewed.md`, and stores `planVerdict` / `planReviewedPath` on the task. Stage prompts automatically include the reviewed plan and the output files of passed dependency stages.
+
+> **Async stages**: pass `mode: "async"` to `pi_task_stage_run` to avoid blocking a tool call for the full run (recommended when the MCP host enforces a short tool timeout). Harvest with `pi_task_stage_collect(taskId, stageId)`. Failed attempts re-dispatch under a fresh session name to avoid history contamination; after 3 failures the stage goes `manual` with a decision panel (`retry_with_new_hint` is supported via `promptHintOverride`).
+
+> **Restart recovery**: re-running `pi_task_create` with the same `taskId` merges instead of conflicting. Stages whose output file already exists and passes validation are marked `passed` automatically, so interrupted tasks resume without hand-editing `tasks.json`.
 
 ### Session model
 
@@ -62,6 +73,7 @@ Three layers with clear boundaries: **Tool layer** (MCP schema + `plan()` pure f
 - First `pi_delegate` creates the session (`goal` required); later calls auto-continue.
 - The registry persists to `~/.pi-subagent/registry.json` (atomic write; on restart, interrupted `running` records are corrected to `error`).
 - Concurrency cap: **4** running runs; a single session is never run concurrently.
+- Tasks persist to `~/.pi-subagent/tasks.json` (atomic write; running stages are corrected to `failed(interrupted_by_restart)` on restart).
 
 ## Install
 
@@ -94,7 +106,7 @@ Optional env vars:
 ## Test
 
 ```bash
-npm test           # full suite (79 tests)
+npm test           # full suite (140 tests)
 npm run test:fast  # dot reporter
 ```
 
@@ -131,7 +143,7 @@ Key design decisions, all backed by real probing of `pi -p` output and external 
 
 ## Status
 
-Working implementation, 79 passing tests. Not yet published to npm — run from source via `tsx`.
+Working implementation, 140 passing tests. Not yet published to npm — run from source via `tsx`.
 
 ## License
 

@@ -14,16 +14,30 @@ export function buildStagePrompt(
   task: Task,
   attemptNo: number,
   prevFailure?: PrevFailure,
+  promptHintOverride?: string,
 ): string {
   // P2 问题1: 绝对路径直接用，相对路径才 join cwd（join 不会让绝对路径胜出）
   const abs = (p: string) => (isAbsolute(p) ? p : join(task.cwd, p));
   const inputs = (stage.inputFiles ?? []).map(abs);   // 防御 undefined
   const output = abs(stage.outputFile ?? "output.txt");
 
+  // 自动注入依赖阶段（dependsOn 且已 passed/skipped）的产出文件作为输入——
+  // Pi 需要读依赖产出才能正确完成本阶段（如测试阶段要读核心引擎代码）。
+  for (const depId of stage.dependsOn ?? []) {
+    const dep = task.stages.find((s) => s.stageId === depId);
+    if (dep && (dep.status === "passed" || dep.status === "skipped") && dep.outputFile) {
+      const depOut = abs(dep.outputFile);
+      if (!inputs.includes(depOut)) inputs.push(depOut);
+    }
+  }
+
   const lines: string[] = [];
   lines.push("【输入】读以下文件获取上下文（不要联网，资料已提供）：");
   for (const f of inputs) lines.push(`  - ${f}`);
   if (task.planReviewedPath) lines.push(`  - ${abs(task.planReviewedPath)}（审阅后的计划，含技术要点校准）`);
+  if (inputs.length === 0 && !task.planReviewedPath) {
+    lines.push("  - （无显式输入文件；可 ls 任务目录查看已有产出）");
+  }
 
   lines.push("");
   lines.push(`【目标】${stage.objective}（章节：${stage.title}）`);
@@ -38,7 +52,8 @@ export function buildStagePrompt(
   lines.push("- 第2步：立即用 write 创建文件骨架（空结构 + 各小节标题），不要先想完整内容。");
   lines.push("- 第3步起：用 edit 每次只填充 1 个小节，连续做直到填完。");
   lines.push("- 每个 edit/write/read 都是独立 tool 调用，中间绝不要长时间纯思考——频繁调用工具保持进度。");
-  if (stage.promptHint) lines.push(`- 特别注意：${stage.promptHint}`);
+  const hint = promptHintOverride ?? stage.promptHint;
+  if (hint) lines.push(`- 特别注意：${hint}`);
 
   // 升级指令（attempt > 1）
   if (attemptNo > 1 && prevFailure) {

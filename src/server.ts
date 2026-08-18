@@ -13,7 +13,7 @@ import { status } from "./tools/status.js";
 import { planTool } from "./tools/plan-tool.js";
 import { sessionList, sessionSnapshot, sessionFork } from "./tools/session.js";
 import { kill } from "./tools/kill.js";
-import { taskCreate, taskList, taskPlan, taskStageRun, applyReviewResult } from "./tools/task.js";
+import { taskCreate, taskList, taskPlan, taskStageRun, taskStageCollect, applyReviewResult } from "./tools/task.js";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -166,7 +166,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
                   items: {
                     type: "object",
                     properties: {
-                      kind: { type: "string", enum: ["file_exists", "file_nonempty", "contains", "not_contains", "regex"] },
+                      kind: { type: "string", enum: ["file_exists", "file_nonempty", "contains", "not_contains", "regex", "run_check"] },
                       pattern: { type: "string" },
                     },
                   },
@@ -195,7 +195,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "pi_task_stage_run",
-      description: "执行某阶段（含验收+最多3次重派+manual升级）",
+      description: "执行某阶段（含验收+最多3次重派+manual升级）。sync=等完成返回 outcome；async=立即返回 runId，用 pi_task_stage_collect 收割",
       inputSchema: {
         type: "object",
         properties: {
@@ -205,6 +205,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           stallTimeoutMs: { type: "number" },
           runTimeoutMs: { type: "number" },
           maxAttempts: { type: "number" },
+          mode: { type: "string", enum: ["sync", "async"] },
+          promptHintOverride: { type: "string" },
+        },
+        required: ["taskId", "stageId"],
+      },
+    },
+    {
+      name: "pi_task_stage_collect",
+      description: "收割 async stage_run 的结果（long-poll），完成后判定+自动重派（最多3次），失败进 manual",
+      inputSchema: {
+        type: "object",
+        properties: {
+          taskId: { type: "string" },
+          stageId: { type: "string" },
+          waitTimeoutMs: { type: "number" },
         },
         required: ["taskId", "stageId"],
       },
@@ -231,9 +246,23 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       case "pi_delegate":
         result = await delegate(args, { sessions, runs, procs, onSessionChange: persist });
         break;
-      case "pi_status":
-        result = await status(args, runs);
+      case "pi_status": {
+        const r = await status(args, runs);
+        // 审阅闭环：该 run 若是某 task 的 review run 且已终结 → 自动解析 verdict
+        // （applyReviewResult 读 _plan-reviewed.md，更新 task.planVerdict/planReviewedPath）
+        if (r.status !== "running" && typeof args.runId === "string") {
+          for (const t of tasks.list()) {
+            if (t.reviewRunId === args.runId && !t.planVerdict) {
+              applyReviewResult(t.taskId, args.runId, {
+                tasks, sessions, runs, procs, onTaskChange: persistTasks,
+              });
+              break;
+            }
+          }
+        }
+        result = r;
         break;
+      }
       case "pi_plan":
         result = planTool(args, sessions);
         break;
@@ -260,6 +289,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
       case "pi_task_stage_run":
         result = await taskStageRun(args, { tasks, sessions, runs, procs, onTaskChange: persistTasks });
+        break;
+      case "pi_task_stage_collect":
+        result = await taskStageCollect(args, { tasks, sessions, runs, procs, onTaskChange: persistTasks });
         break;
       case "pi_task_list":
         result = taskList({ tasks, sessions, runs, procs }, { taskId: args.taskId, status: args.status });
