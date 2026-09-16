@@ -1,5 +1,7 @@
 # Pi 子代理编排层设计 (pi-subagent)
 
+> **⚠️ 历史设计 / 已被 ticket 05 supersede。** 本文档保留原始设计原文，仅作历史记录。当前实现只支持两个 MCP 工具：`pi_delegate` 与 `pi_status`。文中出现的 `pi_plan` / `pi_session_*` / `pi_kill` / `pi_task_*` 工具以及 `tasks.json` 持久化等均为历史内容，不代表现行 API 或实施指导。
+
 - **状态**: 设计已与用户确认，待实现
 - **日期**: 2026-07-01
 - **作者**: ZCode 协同设计

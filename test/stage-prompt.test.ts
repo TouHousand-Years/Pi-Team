@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { join, resolve } from "node:path";
 import { buildStagePrompt, buildReviewPrompt, buildUpgradeHint } from "../src/tools/stage-prompt.js";
 import type { Stage, Task } from "../src/types.js";
+
+const PROJECT_DIR = resolve("/proj");
 
 function makeStage(over: Partial<Stage> = {}): Stage {
   return {
@@ -22,7 +25,7 @@ function makeTask(over: Partial<Task> = {}): Task {
   return {
     taskId: "t1",
     goal: "生成课件",
-    cwd: "/proj",
+    cwd: PROJECT_DIR,
     status: "executing",
     planDraftPath: "_plan-draft.md",
     stages: [],
@@ -41,14 +44,14 @@ test("buildStagePrompt 含 IOAC 四段", () => {
 });
 
 test("buildStagePrompt 输入文件用绝对路径", () => {
-  const p = buildStagePrompt(makeStage(), makeTask({ cwd: "/proj" }), 1);
-  assert.ok(p.includes("/proj/_refs.md"), "输入文件绝对化");
-  assert.ok(p.includes("/proj/_skeleton.md"));
+  const p = buildStagePrompt(makeStage(), makeTask(), 1);
+  assert.ok(p.includes(join(PROJECT_DIR, "_refs.md")), "输入文件绝对化");
+  assert.ok(p.includes(join(PROJECT_DIR, "_skeleton.md")));
 });
 
 test("buildStagePrompt 输出文件绝对路径 + 只写它", () => {
-  const p = buildStagePrompt(makeStage(), makeTask({ cwd: "/proj" }), 1);
-  assert.ok(p.includes("/proj/02-scaled.html"));
+  const p = buildStagePrompt(makeStage(), makeTask(), 1);
+  assert.ok(p.includes(join(PROJECT_DIR, "02-scaled.html")));
   assert.ok(p.includes("只写"), "强调只写 outputFile");
 });
 
@@ -67,7 +70,7 @@ test("buildStagePrompt 自动注入 dependsOn 已通过阶段的 outputFile", ()
   });
   const stage = task.stages[1];
   const p = buildStagePrompt(stage, task, 1);
-  assert.ok(p.includes("/proj/01-base.html"), "依赖阶段的 outputFile 注入输入");
+  assert.ok(p.includes(join(PROJECT_DIR, "01-base.html")), "依赖阶段的 outputFile 注入输入");
 });
 
 test("buildStagePrompt promptHintOverride 覆盖 stage.promptHint", () => {
@@ -104,8 +107,8 @@ test("buildUpgradeHint: 各 failureType 模板", () => {
 });
 
 test("buildReviewPrompt 含审阅指令 + verdict 要求", () => {
-  const p = buildReviewPrompt(makeTask({ cwd: "/proj", planDraftPath: "_plan-draft.md" }));
-  assert.ok(p.includes("/proj/_plan-draft.md"), "读草案");
+  const p = buildReviewPrompt(makeTask({ planDraftPath: "_plan-draft.md" }));
+  assert.ok(p.includes(join(PROJECT_DIR, "_plan-draft.md")), "读草案");
   assert.ok(p.includes("verdict"), "要求 verdict");
   assert.ok(p.includes("approve"), "说明 verdict 选项");
   assert.ok(p.includes("_plan-reviewed.md"), "产出文件");

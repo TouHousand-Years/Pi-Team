@@ -1,5 +1,7 @@
 # pi-subagent 实现计划
 
+> **⚠️ 历史设计 / 已被 ticket 05 supersede。** 本计划保留原实现步骤原文，仅作历史记录。当前实现只支持 `pi_delegate` 与 `pi_status` 两个 MCP 工具；文中 `pi_plan` / `pi_session_*` / `pi_kill` / `pi_task_*` 与 `tasks.json` 等内容均为历史，不是现行实施指导。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现一个 MCP server (`pi-subagent`) + Skill，把 Pi CLI 当作可被任意 MCP host 调用的编程子代理，支持 sync/async 委派、具名 session、调度决策、生命周期管理。

@@ -5,7 +5,6 @@ import { RunRegistry } from "../src/registry/run.js";
 import { ProcessTable } from "../src/runner/process-table.js";
 import { delegate } from "../src/tools/delegate.js";
 import { status } from "../src/tools/status.js";
-import { kill } from "../src/tools/kill.js";
 import { fakePiEnv, tmpCwd, withEnv } from "./helpers.js";
 
 function sys() {
@@ -46,20 +45,6 @@ test("sync 超时：hang → status timeout", async () => {
     const r1 = await delegate({ prompt: "do", session: "s1", cwd: c.dir, goal: "g", mode: "async", runTimeoutMs: 500 }, d);
     const done = await status({ runId: r1.runId, waitTimeoutMs: 3000 }, d.runs);
     assert.equal(done?.status, "timeout");
-    await drain(d);
-  });
-  c.cleanup();
-});
-
-test("kill 跨调用：delegate → kill → status killed", async () => {
-  const c = tmpCwd();
-  await withEnv(fakePiEnv("hang"), async () => {
-    const d = sys();
-    const r1 = await delegate({ prompt: "do", session: "s1", cwd: c.dir, goal: "g", mode: "async" }, d);
-    const k = kill({ runId: r1.runId }, d);
-    assert.equal(k.killed, true);
-    const done = await status({ runId: r1.runId, waitTimeoutMs: 3000 }, d.runs);
-    assert.equal(done?.status, "killed");
     await drain(d);
   });
   c.cleanup();

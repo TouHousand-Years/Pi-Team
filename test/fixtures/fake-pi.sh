@@ -7,6 +7,32 @@ UUID="${FAKE_PI_UUID:-019f0000-0000-0000-0000-000000000001}"
 
 emit() { printf '%s\n' "$1"; }
 
+HAS_SESSION_ID=0
+for arg in "$@"; do
+  if [[ "$arg" == "--session-id" ]]; then HAS_SESSION_ID=1; fi
+done
+
+if [[ "$MODE" == "require_session" && "$HAS_SESSION_ID" != "1" ]]; then
+  echo "expected --session-id" >&2
+  exit 7
+fi
+
+if [[ "$MODE" == "continuity" ]]; then
+  MARKER="${FAKE_PI_MARKER:?FAKE_PI_MARKER is required for continuity mode}"
+  if [[ -f "$MARKER" ]]; then
+    if [[ "$HAS_SESSION_ID" != "1" ]]; then
+      echo "continuation omitted --session-id" >&2
+      exit 7
+    fi
+  else
+    if [[ "$HAS_SESSION_ID" == "1" ]]; then
+      echo "creation unexpectedly supplied --session-id" >&2
+      exit 7
+    fi
+    touch "$MARKER"
+  fi
+fi
+
 if [[ "$MODE" == "no_session" ]]; then
   # 不吐 session 事件，直接退出非零
   echo "pi bootstrap failed" >&2
