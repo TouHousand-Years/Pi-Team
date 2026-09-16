@@ -8,6 +8,8 @@ import { ProcessTable } from "./runner/process-table.js";
 import { loadRegistry, saveRegistry } from "./registry/persist.js";
 import { delegate } from "./tools/delegate.js";
 import { status } from "./tools/status.js";
+import { TranscriptStore } from "./transcript/store.js";
+import { CLEANUP_INTERVAL_MS } from "./transcript/schema.js";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -18,9 +20,24 @@ const sessions = new SessionRegistry();
 const runs = new RunRegistry();
 const procs = new ProcessTable();
 
+// Transcript 存储：初始化失败被 store 内部隔离（disabled），绝不阻断 server 启动
+const transcripts = new TranscriptStore();
+
 // 启动加载
 const loaded = loadRegistry(REGISTRY_PATH);
 sessions.loadAll(loaded.sessions);
+
+// 崩溃对账 + 保留清理（启动一次；之后每 15 分钟）。
+// 对账必须排除本进程仍活跃的 Run——活 Run 的 transcript 由 writer 独占写。
+function reconcileAndCleanup() {
+  try {
+    transcripts.reconcile(runs.list().filter((r) => r.status === "running").map((r) => r.runId));
+    transcripts.cleanup();
+  } catch { /* 隔离：清理失败不影响启动/服务 */ }
+}
+reconcileAndCleanup();
+const cleanupTimer = setInterval(reconcileAndCleanup, CLEANUP_INTERVAL_MS);
+cleanupTimer.unref?.();
 
 // session 持久化钩子
 let savePending = false;
@@ -76,10 +93,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     let result: unknown;
     switch (req.params.name) {
       case "pi_delegate":
-        result = await delegate(args, { sessions, runs, procs, onSessionChange: persist });
+        result = await delegate(args, { sessions, runs, procs, onSessionChange: persist, transcripts });
         break;
       case "pi_status":
-        result = await status(args, runs);
+        result = await status(args, runs, transcripts);
         break;
       default:
         return {

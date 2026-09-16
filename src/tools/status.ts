@@ -1,4 +1,5 @@
 import type { RunRegistry } from "../registry/run.js";
+import type { TranscriptStore, TranscriptDescription } from "../transcript/store.js";
 import { Errors } from "../errors.js";
 
 export interface StatusInput {
@@ -15,9 +16,15 @@ export interface StatusOutput {
   progressTruncated?: boolean;
   usage?: any;
   error?: any;
+  // Transcript 可用性/完整性摘要（无存储时不带该字段——向后兼容）
+  transcript?: TranscriptDescription;
 }
 
-export async function status(input: StatusInput, runs: RunRegistry): Promise<StatusOutput> {
+export async function status(
+  input: StatusInput,
+  runs: RunRegistry,
+  transcripts?: TranscriptStore,
+): Promise<StatusOutput> {
   // 立即返回（若已完成/不存在）
   const existing = runs.get(input.runId);
   if (existing && existing.status !== "running") {
@@ -30,6 +37,7 @@ export async function status(input: StatusInput, runs: RunRegistry): Promise<Sta
       progressTruncated: existing.progressTruncated,
       usage: existing.usage,
       error: existing.error,
+      transcript: transcripts?.describe(input.runId),
     };
   }
   if (!existing && runs.isExpired(input.runId)) throw Errors.runExpired(input.runId);
@@ -52,5 +60,6 @@ export async function status(input: StatusInput, runs: RunRegistry): Promise<Sta
     progressTruncated: run.progressTruncated,
     usage: run.usage,
     error: run.error,
+    transcript: transcripts?.describe(input.runId),
   };
 }

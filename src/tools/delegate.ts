@@ -6,6 +6,8 @@ import { spawnDelegate, collectOutput } from "../runner/spawn.js";
 import { extractResult } from "../runner/parse.js";
 import { Errors } from "../errors.js";
 import { ERROR_CODES, PI_BUILTIN_TOOLS, type Constraints, type Snapshot, type ProgressEvent } from "../types.js";
+import type { TranscriptStore } from "../transcript/store.js";
+import { observeSettlement, type TerminalInfo } from "../transcript/schema.js";
 
 const MAX_CONCURRENCY = 4;
 const SESSION_START_TIMEOUT_MS = 10000;
@@ -37,6 +39,8 @@ export interface DelegateDeps {
   procs: ProcessTable;
   // session 状态变更后的持久化钩子（async finalize 完成时调用，避免 registry 文件 stale）
   onSessionChange?: () => void;
+  // Transcript 存储（可选）：存储故障被 writer 隔离，绝不影响 Run
+  transcripts?: TranscriptStore;
 }
 
 export interface DelegateOutput {
@@ -56,6 +60,25 @@ function validateTools(c: Constraints | undefined, allowUnknown: boolean): void 
   for (const t of [...(c.tools ?? []), ...(c.excludeTools ?? [])]) {
     if (!known.has(t) && !allowUnknown) throw Errors.unknownTool(t);
   }
+}
+
+// registry 状态 → Transcript 终态。completed→succeeded；被杀/超时=截断→incomplete；
+// 协议破坏（无 session 头/无 agent_end/握手超时）→protocol-error；spawn 失败与其余错误→failed。
+function transcriptOutcome(
+  status: string,
+  spawnFailed: boolean,
+  error: { code?: string } | undefined,
+): TerminalInfo["outcome"] {
+  if (status === "completed") return "succeeded";
+  if (status === "timeout" || status === "killed") return "incomplete";
+  if (spawnFailed) return "failed";
+  const code = error?.code;
+  if (
+    code === ERROR_CODES.NO_AGENT_END
+    || code === ERROR_CODES.SESSION_CREATE_FAILED
+    || code === ERROR_CODES.SESSION_START_TIMEOUT
+  ) return "protocol-error";
+  return "failed";
 }
 
 export async function delegate(input: DelegateInput, deps: DelegateDeps): Promise<DelegateOutput> {
@@ -87,8 +110,17 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
   const startedAt = Date.now();
   const cwd = existing?.cwd ?? input.cwd!;
 
-  // 建 run + spawn
+  // 建 run + transcript bundle（先落证据边界，再 spawn）+ spawn
   const run = deps.runs.create({ session: input.session, startedAt });
+  const writer = deps.transcripts?.begin({
+    runId: run.runId,
+    session: input.session,
+    cwd,
+    promptSubmitted: input.prompt,
+    promptEffective: input.prompt,  // 当前 argv 直接使用 prompt 原文；两者分离记录
+    constraints: { ...constraints },
+    sessionId: existing?.piSessionId,
+  });
   const { child } = spawnDelegate({
     prompt: input.prompt,
     sessionId: existing?.piSessionId,
@@ -102,6 +134,10 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
     piSessionId: existing?.piSessionId,
     sessionRecordCreated: !isCreate,  // 续接时 session 已存在
     asyncResolved: false,
+    // Pi settlement 观测（语义交叉核对用，不控制终态判定）
+    agentEnd: false,
+    agentSettled: false,
+    lastStdoutType: undefined as string | undefined,
   };
   let resolveHandshake: () => void = () => {};
   const handshakePromise = new Promise<void>((res) => { resolveHandshake = res; });
@@ -201,18 +237,48 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
     // 触发持久化（Medium #3：async finalize 完成时也要落盘，避免 registry stale）
     deps.onSessionChange?.();
 
+    // 终态记录（wrapper 是权威；Pi settlement 只是交叉核对）。writer 内部吞错，绝不影响 Run。
+    // 流异常/截断不改变 wrapper 终态，但必须降级 capture integrity（captureError → integrity 非 ok）。
+    if (!res.sawEof) {
+      writer?.captureError(res.spawnError
+        ? `spawn failed, nothing captured: ${res.spawnError.message}`
+        : "stdio stream error before EOF; captured output may be truncated");
+    }
+    const outcome = transcriptOutcome(status, !!res.spawnError, error);
+    writer?.finalize({
+      outcome,
+      exitCode: res.exitCode,
+      signal: res.signal,
+      startedAt,
+      endedAt,
+      sawEof: res.sawEof,
+      piSettlement: {
+        agentEnd: state.agentEnd,
+        agentSettled: state.agentSettled,
+        lastStdoutType: state.lastStdoutType,
+      },
+    });
+    // 终态落盘后触发一次保留清理（fire-and-forget）
+    try { deps.transcripts?.cleanup(); } catch { /* 清理失败不影响 Run */ }
+
     return { status, result: result ?? undefined, error, usage, progress, progressTruncated: false };
   };
 
   const collectPromise = collectOutput(child, {
     runTimeoutMs,
+    onStdoutData: (buf) => writer?.stdoutData(buf),
+    onStderrData: (buf) => writer?.stderrData(buf),
     onLine: (line) => {
+      // Pi settlement 观测（廉价前缀检查；lastStdoutType 供终态交叉核对）
+      const typeMatch = /^{"type":"([^"]*)"/.exec(line);
+      observeSettlement(state, typeMatch?.[1]);
       // session 事件握手
       if (!state.sessionIdReceived && line.includes('"type":"session"')) {
         try {
           const obj = JSON.parse(line);
           state.piSessionId = obj.id;
           state.sessionIdReceived = true;
+          writer?.state("pi-session-established", state.piSessionId);
           if (isCreate && state.piSessionId && !state.sessionRecordCreated) {
             deps.sessions.create({
               name: input.session,

@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { StringDecoder } from "node:string_decoder";
 import { buildDelegateArgs, buildForkArgs } from "./argv.js";
 import type { Constraints } from "../types.js";
 
@@ -43,13 +44,21 @@ export interface CollectResult {
   exitCode: number | null;
   signal: NodeJS.Signals | null;
   spawnError?: Error;   // spawn 失败（如 PI_BIN 不存在）
+  sawEof: boolean;      // stdout 管道无流错误正常关闭（spawn 失败/流错误为 false）
 }
 
-// 逐行读 child.stdout，回调每行；返回结束 promise（含 exitCode/signal）
-export function collectOutput(
-  child: ChildProcess,
-  opts: { runTimeoutMs?: number; onLine?: (line: string) => void } = {},
-): Promise<CollectResult> {
+export interface CollectOpts {
+  runTimeoutMs?: number;
+  onLine?: (line: string) => void;
+  // 原始边界字节回调（Transcript 用）：在任何解码之前收到原始 chunk
+  onStdoutData?: (buf: Buffer) => void;
+  onStderrData?: (buf: Buffer) => void;
+}
+
+// 逐行读 child.stdout，回调每行；返回结束 promise（含 exitCode/signal）。
+// 不用 setEncoding：手动 StringDecoder 按 UTF-8 解码（跨 chunk 的多字节序列安全），
+// 同时把原始 Buffer 交给 onStdoutData/onStderrData 做无损捕获。
+export function collectOutput(child: ChildProcess, opts: CollectOpts = {}): Promise<CollectResult> {
   return new Promise((resolve) => {
     const lines: string[] = [];
     let stderrBuf = "";
@@ -57,12 +66,13 @@ export function collectOutput(
     let timer: NodeJS.Timeout | undefined;
     let settled = false;
     let spawnError: Error | undefined;
+    let streamError = false;
+    const stdoutDecoder = new StringDecoder("utf8");
+    const stderrDecoder = new StringDecoder("utf8");
 
-    child.stdout?.setEncoding("utf8");
-    child.stderr?.setEncoding("utf8");
-
-    child.stdout?.on("data", (chunk: string) => {
-      pending += chunk;
+    child.stdout?.on("data", (chunk: Buffer) => {
+      opts.onStdoutData?.(chunk);
+      pending += stdoutDecoder.write(chunk);
       let idx;
       while ((idx = pending.indexOf("\n")) >= 0) {
         const line = pending.slice(0, idx);
@@ -73,15 +83,16 @@ export function collectOutput(
         }
       }
     });
-    child.stderr?.on("data", (chunk: string) => {
-      stderrBuf += chunk;
+    child.stderr?.on("data", (chunk: Buffer) => {
+      opts.onStderrData?.(chunk);
+      stderrBuf += stderrDecoder.write(chunk);
       if (stderrBuf.length > 4096) stderrBuf = stderrBuf.slice(-2048);  // 保留末 2KB
     });
     // 流级 'error' 监听：管道在 destroy()/子进程被 kill 时可能发 'error'（EPIPE 等）。
     // 若无监听器，Node 会把它升级成 uncaughtException 直接崩掉整个 server（并发下高发）。
-    // 这些错误对结果无影响，吞掉即可。
-    child.stdout?.on("error", () => undefined);
-    child.stderr?.on("error", () => undefined);
+    // 这些错误对结果无影响，吞掉即可（但 sawEof 会标 false，供 Transcript 记捕获不完整）。
+    child.stdout?.on("error", () => { streamError = true; });
+    child.stderr?.on("error", () => { streamError = true; });
 
     let killTimer: NodeJS.Timeout | undefined;
     const done = (exitCode: number | null, signal: NodeJS.Signals | null) => {
@@ -89,23 +100,41 @@ export function collectOutput(
       settled = true;
       if (timer) clearTimeout(timer);
       if (killTimer) clearTimeout(killTimer);  // 清理 SIGKILL 宽限定时器，避免悬挂
+      if (graceTimer) clearTimeout(graceTimer);  // 清理 exit 宽限定时器
       // 销毁 stdio 流，避免流 pending 阻止进程退出
       child.stdout?.destroy();
       child.stderr?.destroy();
+      pending += stdoutDecoder.end();
       if (pending.trim()) {
         lines.push(pending);
         opts.onLine?.(pending);
       }
-      resolve({ lines, stderrTail: stderrBuf.slice(-2048), exitCode, signal, spawnError });
+      stderrBuf += stderrDecoder.end();
+      resolve({
+        lines,
+        stderrTail: stderrBuf.slice(-2048),
+        exitCode,
+        signal,
+        spawnError,
+        sawEof: !spawnError && !streamError,
+      });
     };
 
-    child.once("exit", (code, sig) => done(code, sig));
-
-    // spawn 失败（如 PI_BIN 不存在/不可执行）：发 error，可能不发 exit。
-    // close 兜底：进程退出后流关闭也会触发，确保 done 一定被调用。
+    // 完成时机：exit 后不立即 done——stdio 管道里可能还有未消费的数据
+    // （写同步 fsync 拖慢事件循环时尤其明显），立刻 done+destroy 会截断 stdout。
+    // 等待 close（stdio 全部关闭、数据投递完毕）或 GRACE_MS 宽限到点。
+    // 宽限兜底覆盖 kill 场景：被杀进程的后代（如 sleep）可能长期持有管道，close 会迟迟不来。
+    const EXIT_GRACE_MS = 500;
+    let exitInfo: { code: number | null; sig: NodeJS.Signals | null } | undefined;
+    let graceTimer: NodeJS.Timeout | undefined;
+    child.once("exit", (code, sig) => {
+      exitInfo = { code, sig };
+      graceTimer = setTimeout(() => done(exitInfo?.code ?? code, exitInfo?.sig ?? sig), EXIT_GRACE_MS);
+    });
+    // spawn 失败（如 PI_BIN 不存在/不可执行）：发 error；close/exit 仍会触发兜底。
     child.once("error", (err) => {
       spawnError = err;
-      done(null, null);
+      done(exitInfo?.code ?? null, exitInfo?.sig ?? null);
     });
     child.once("close", (code, sig) => done(code, sig));
 
