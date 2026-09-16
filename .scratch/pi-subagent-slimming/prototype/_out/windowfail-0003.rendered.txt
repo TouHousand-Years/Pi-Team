@@ -1,0 +1,81 @@
+== launch: pi -p "prototype run windowfail-0003 (windowfail)" --mode json --session-id windowfail-0003 --provider mock --model mock-model --no-skills --no-context-files --tools bash
+== session
+   version: 3
+   id: windowfail-0003
+   timestamp: 2026-09-16T07:40:46.520Z
+   cwd: C:\work\pi-subagent-prototype
+== agent_start
+== turn_start
+== message_start
+   message:
+     role: assistant
+     content: []
+     stopReason: null
+== message_update
+   assistantMessageEvent:
+     type: text_delta
+     contentIndex: 1
+     delta: Isolation run 3 reporting; only this window may show RUN-SENTINEL-W03 and payload marker unique-21.
+== tool_execution_start
+   toolCallId: call_3
+   toolName: bash
+   args:
+     command: echo RUN-SENTINEL-W03
+== tool_execution_update
+   toolCallId: call_3
+   toolName: bash
+   args:
+     command: echo RUN-SENTINEL-W03
+   partialResult:
+     content:
+       [0]:
+         type: text
+         text: RUN-SENTINEL-W03 partial output
+     details: {}
+== tool_execution_end
+   toolCallId: call_3
+   toolName: bash
+   result:
+     content:
+       [0]:
+         type: text
+         text: RUN-SENTINEL-W03: isolation payload 3 (unique-21)
+     details: {}
+   isError: false
+== message_start
+   message:
+     role: toolResult
+     toolCallId: call_3
+     toolName: bash
+     content:
+       [0]:
+         type: text
+         text: RUN-SENTINEL-W03 result
+     isError: false
+== message_end
+   message:
+     role: toolResult
+     toolCallId: call_3
+     toolName: bash
+     content:
+       [0]:
+         type: text
+         text: RUN-SENTINEL-W03 result
+     isError: false
+== message_end
+   message:
+     role: assistant
+     content: []
+     stopReason: stop
+== turn_end
+   message:
+     role: assistant
+     stopReason: stop
+   toolResults: []
+== agent_end
+   messages:
+     [0]:
+       role: assistant
+   willRetry: false
+== agent_settled
+== terminal status=completed exit=0 signal=null

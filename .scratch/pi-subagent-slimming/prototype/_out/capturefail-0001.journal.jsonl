@@ -1,0 +1,11 @@
+{"seq":1,"ts":1789544446568,"ch":"meta","kind":"launch","data":"pi -p \"prototype run capturefail-0001 (capturefail)\" --mode json --session-id capturefail-0001 --provider mock --model mock-model --no-skills --no-context-files --tools bash"}
+{"seq":2,"ts":1789544446582,"ch":"stdout","data":"{\"type\":\"session\",\"version\":3,\"id\":\"capturefail-0001\",\"timestamp\":\"2026-09-16T07:40:46.581Z\",\"cwd\":\"C:\\\\work\\\\pi-subagent-prototype\"}"}
+{"seq":3,"ts":1789544510047,"ch":"stdout","data":"{\"type\":\"agent_start\"}"}
+{"seq":4,"ts":1789544510056,"ch":"stdout","data":"{\"type\":\"turn_start\"}"}
+{"seq":5,"ts":1789544510071,"ch":"stdout","data":"{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"stopReason\":null}}"}
+{"seq":6,"ts":1789544510087,"ch":"stdout","data":"{\"type\":\"message_update\",\"assistantMessageEvent\":{\"type\":\"text_delta\",\"contentIndex\":1,\"delta\":\"capturefail: partial output before the capture died\"}}"}
+{"seq":7,"ts":1789544510101,"ch":"stderr","data":"capturefail: stdout stream ended unexpectedly before a terminal event"}
+{"seq":8,"ts":1789544510115,"ch":"stdout","data":"{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_cf\",\"toolName\":\"bash\",\"args\":{\"command\":\"sleep forever\"}}"}
+{"seq":9,"ts":1789544510131,"ch":"stdout","data":"{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_cf\",\"toolName\":\"bash\",\"args\":{\"command\":\"sleep forever\"},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"partial\"}],\"details\":{}}}"}
+{"seq":10,"ts":1789544510146,"ch":"stdout","data":"{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_cf\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"partial\"}],\"details\":{}},\"isError\":false}"}
+{"seq":11,"ts":1789544510164,"ch":"meta","kind":"captureError","message":"simulated capture failure: stdout closed without terminal event","data":"simulated capture failure: stdout closed without terminal event"}

@@ -1,0 +1,218 @@
+{
+    "tool":  "fixture-generator.ps1",
+    "scenario":  "all",
+    "seed":  0,
+    "requestedRuns":  4,
+    "stream":  true,
+    "rate":  0,
+    "volumeEvents":  50000,
+    "generatedAt":  1789544510415,
+    "runs":  [
+                 {
+                     "runId":  "volume-0001",
+                     "journal":  "volume-0001.journal.jsonl",
+                     "scenario":  "volume",
+                     "emittedCount":  50011,
+                     "lastSeq":  50011,
+                     "rawSha256":  "64810a8d216aeb470a91d17d1ca08ee344c3e8fe95340778e53e91720fb7e6ef",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "",
+                     "generatorFinishedAt":  1789544510396
+                 },
+                 {
+                     "runId":  "closure-0001",
+                     "journal":  "closure-0001.journal.jsonl",
+                     "scenario":  "closure",
+                     "emittedCount":  2406,
+                     "lastSeq":  2406,
+                     "rawSha256":  "53476d610ef936a07873c1abfb6a05178e810aa223e4681fa3d24a53ef9112c1",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "",
+                     "generatorFinishedAt":  1789544510397
+                 },
+                 {
+                     "runId":  "happy-0001",
+                     "journal":  "happy-0001.journal.jsonl",
+                     "scenario":  "happy",
+                     "emittedCount":  41,
+                     "lastSeq":  41,
+                     "rawSha256":  "4adb9c01950028ead53c9f5598f8643136d3b48e31cbeca0eac2642ee45bf1c8",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "",
+                     "generatorFinishedAt":  1789544510397
+                 },
+                 {
+                     "runId":  "unicode-0001",
+                     "journal":  "unicode-0001.journal.jsonl",
+                     "scenario":  "unicode",
+                     "emittedCount":  711,
+                     "lastSeq":  711,
+                     "rawSha256":  "3c06104ce9d0e56ee8894df23d049f630c41cf758c1ca1ebbe3a011fb085d091",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "",
+                     "generatorFinishedAt":  1789544510398
+                 },
+                 {
+                     "runId":  "isolation-0001",
+                     "journal":  "isolation-0001.journal.jsonl",
+                     "scenario":  "isolation",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "89438e37bca822c8ac66351f04921589808ce2158ca89e11f54b8e9b977786c5",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-01",
+                     "generatorFinishedAt":  1789544510398
+                 },
+                 {
+                     "runId":  "isolation-0002",
+                     "journal":  "isolation-0002.journal.jsonl",
+                     "scenario":  "isolation",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "1f34959dd06bf4257fce543557db5bb67d2d63ac25914170ab156e37173cd227",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-02",
+                     "generatorFinishedAt":  1789544510398
+                 },
+                 {
+                     "runId":  "isolation-0003",
+                     "journal":  "isolation-0003.journal.jsonl",
+                     "scenario":  "isolation",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "b40313af337cac6aa9339562a47db347720b7b662bb9701a09265e9faf08b9ea",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-03",
+                     "generatorFinishedAt":  1789544510398
+                 },
+                 {
+                     "runId":  "isolation-0004",
+                     "journal":  "isolation-0004.journal.jsonl",
+                     "scenario":  "isolation",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "e15a17bd3c1f18c6633f2bbcee986acddcd60fef9a7e7ee70b5ca497141fcd43",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-04",
+                     "generatorFinishedAt":  1789544510399
+                 },
+                 {
+                     "runId":  "windowfail-0001",
+                     "journal":  "windowfail-0001.journal.jsonl",
+                     "scenario":  "windowfail",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "2517bd61306329d1aa425cb97194d5d70834c4423316f03d4392082e13db2bf1",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-W01",
+                     "generatorFinishedAt":  1789544510399
+                 },
+                 {
+                     "runId":  "windowfail-0002",
+                     "journal":  "windowfail-0002.journal.jsonl",
+                     "scenario":  "windowfail",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "6d64abf1a7a5f28aaa178e3ccd59ae0c724769e187880603e02854e7f41ccd57",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-W02",
+                     "generatorFinishedAt":  1789544510399
+                 },
+                 {
+                     "runId":  "windowfail-0003",
+                     "journal":  "windowfail-0003.journal.jsonl",
+                     "scenario":  "windowfail",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "53cd57dfcbdf1225848c76c9fd3df1529718d5091228309d5ada0a65451169e5",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-W03",
+                     "generatorFinishedAt":  1789544510399
+                 },
+                 {
+                     "runId":  "windowfail-0004",
+                     "journal":  "windowfail-0004.journal.jsonl",
+                     "scenario":  "windowfail",
+                     "emittedCount":  16,
+                     "lastSeq":  16,
+                     "rawSha256":  "786eaa605ca3aadbc1a195a31a40e15282dd6b0b5204ca5e86386a3f081c9d2b",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "RUN-SENTINEL-W04",
+                     "generatorFinishedAt":  1789544510399
+                 },
+                 {
+                     "runId":  "capturefail-0001",
+                     "journal":  "capturefail-0001.journal.jsonl",
+                     "scenario":  "capturefail",
+                     "emittedCount":  11,
+                     "lastSeq":  11,
+                     "rawSha256":  "f881a508b4c14d047208a7d6033cb04d48e860e658ff6fbf0a69edfb9a4a0f83",
+                     "terminal":  null,
+                     "uniqueSentinel":  "",
+                     "generatorFinishedAt":  1789544510400
+                 },
+                 {
+                     "runId":  "duplicate-0001",
+                     "journal":  "duplicate-0001.journal.jsonl",
+                     "scenario":  "duplicate",
+                     "emittedCount":  13,
+                     "lastSeq":  13,
+                     "rawSha256":  "3b08fc6bc15f55a2c88b5cb8846e019bc63258f7798d88a9fd3f9ac101329c0d",
+                     "terminal":  {
+                                      "status":  "completed",
+                                      "exitCode":  0,
+                                      "signal":  null
+                                  },
+                     "uniqueSentinel":  "",
+                     "generatorFinishedAt":  1789544510400
+                 }
+             ]
+}

@@ -1,0 +1,16 @@
+{"seq":1,"ts":1789544446477,"ch":"meta","kind":"launch","data":"pi -p \"prototype run windowfail-0002 (windowfail)\" --mode json --session-id windowfail-0002 --provider mock --model mock-model --no-skills --no-context-files --tools bash"}
+{"seq":2,"ts":1789544446491,"ch":"stdout","data":"{\"type\":\"session\",\"version\":3,\"id\":\"windowfail-0002\",\"timestamp\":\"2026-09-16T07:40:46.490Z\",\"cwd\":\"C:\\\\work\\\\pi-subagent-prototype\"}"}
+{"seq":3,"ts":1789544509060,"ch":"stdout","data":"{\"type\":\"agent_start\"}"}
+{"seq":4,"ts":1789544509076,"ch":"stdout","data":"{\"type\":\"turn_start\"}"}
+{"seq":5,"ts":1789544509091,"ch":"stdout","data":"{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"stopReason\":null}}"}
+{"seq":6,"ts":1789544509107,"ch":"stdout","data":"{\"type\":\"message_update\",\"assistantMessageEvent\":{\"type\":\"text_delta\",\"contentIndex\":1,\"delta\":\"Isolation run 2 reporting; only this window may show RUN-SENTINEL-W02 and payload marker unique-14.\"}}"}
+{"seq":7,"ts":1789544509123,"ch":"stdout","data":"{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_2\",\"toolName\":\"bash\",\"args\":{\"command\":\"echo RUN-SENTINEL-W02\"}}"}
+{"seq":8,"ts":1789544509139,"ch":"stdout","data":"{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_2\",\"toolName\":\"bash\",\"args\":{\"command\":\"echo RUN-SENTINEL-W02\"},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"RUN-SENTINEL-W02 partial output\"}],\"details\":{}}}"}
+{"seq":9,"ts":1789544509156,"ch":"stdout","data":"{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_2\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"RUN-SENTINEL-W02: isolation payload 2 (unique-14)\"}],\"details\":{}},\"isError\":false}"}
+{"seq":10,"ts":1789544509171,"ch":"stdout","data":"{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_2\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"RUN-SENTINEL-W02 result\"}],\"isError\":false}}"}
+{"seq":11,"ts":1789544509186,"ch":"stdout","data":"{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_2\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"RUN-SENTINEL-W02 result\"}],\"isError\":false}}"}
+{"seq":12,"ts":1789544509202,"ch":"stdout","data":"{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[],\"stopReason\":\"stop\"}}"}
+{"seq":13,"ts":1789544509217,"ch":"stdout","data":"{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"stop\"},\"toolResults\":[]}"}
+{"seq":14,"ts":1789544509233,"ch":"stdout","data":"{\"type\":\"agent_end\",\"messages\":[{\"role\":\"assistant\"}],\"willRetry\":false}"}
+{"seq":15,"ts":1789544509249,"ch":"stdout","data":"{\"type\":\"agent_settled\"}"}
+{"seq":16,"ts":1789544509265,"ch":"meta","kind":"terminal","status":"completed","exitCode":0,"signal":null,"data":"{\"status\":\"completed\",\"exitCode\":0,\"signal\":null}"}

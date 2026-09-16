@@ -1,0 +1,46 @@
+== launch: pi -p "prototype run capturefail-0001 (capturefail)" --mode json --session-id capturefail-0001 --provider mock --model mock-model --no-skills --no-context-files --tools bash
+== session
+   version: 3
+   id: capturefail-0001
+   timestamp: 2026-09-16T07:40:46.581Z
+   cwd: C:\work\pi-subagent-prototype
+== agent_start
+== turn_start
+== message_start
+   message:
+     role: assistant
+     content: []
+     stopReason: null
+== message_update
+   assistantMessageEvent:
+     type: text_delta
+     contentIndex: 1
+     delta: capturefail: partial output before the capture died
+! stderr: capturefail: stdout stream ended unexpectedly before a terminal event
+== tool_execution_start
+   toolCallId: call_cf
+   toolName: bash
+   args:
+     command: sleep forever
+== tool_execution_update
+   toolCallId: call_cf
+   toolName: bash
+   args:
+     command: sleep forever
+   partialResult:
+     content:
+       [0]:
+         type: text
+         text: partial
+     details: {}
+== tool_execution_end
+   toolCallId: call_cf
+   toolName: bash
+   result:
+     content:
+       [0]:
+         type: text
+         text: partial
+     details: {}
+   isError: false
+!! capture error: simulated capture failure: stdout closed without terminal event

@@ -1,0 +1,13 @@
+{"seq":1,"ts":1789544446600,"ch":"meta","kind":"launch","data":"pi -p \"prototype run duplicate-0001 (duplicate)\" --mode json --session-id duplicate-0001 --provider mock --model mock-model --no-skills --no-context-files --tools bash"}
+{"seq":2,"ts":1789544446614,"ch":"stdout","data":"{\"type\":\"session\",\"version\":3,\"id\":\"duplicate-0001\",\"timestamp\":\"2026-09-16T07:40:46.613Z\",\"cwd\":\"C:\\\\work\\\\pi-subagent-prototype\"}"}
+{"seq":3,"ts":1789544510183,"ch":"stdout","data":"{\"type\":\"agent_start\"}"}
+{"seq":4,"ts":1789544510193,"ch":"stdout","data":"{\"type\":\"turn_start\"}"}
+{"seq":5,"ts":1789544510210,"ch":"stdout","data":"{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"stopReason\":null}}"}
+{"seq":6,"ts":1789544510224,"ch":"stdout","data":"{\"type\":\"message_update\",\"assistantMessageEvent\":{\"type\":\"text_delta\",\"contentIndex\":1,\"delta\":\"duplicate terminal probe\"}}"}
+{"seq":7,"ts":1789544510240,"ch":"stdout","data":"{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[],\"stopReason\":\"stop\"}}"}
+{"seq":8,"ts":1789544510256,"ch":"stdout","data":"{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"stopReason\":\"stop\"},\"toolResults\":[]}"}
+{"seq":9,"ts":1789544510272,"ch":"stdout","data":"{\"type\":\"agent_end\",\"messages\":[{\"role\":\"assistant\"}],\"willRetry\":false}"}
+{"seq":10,"ts":1789544510288,"ch":"stdout","data":"{\"type\":\"agent_settled\"}"}
+{"seq":11,"ts":1789544510304,"ch":"meta","kind":"terminal","status":"completed","exitCode":0,"signal":null,"data":"{\"status\":\"completed\",\"exitCode\":0,\"signal\":null}"}
+{"seq":12,"ts":1789544510320,"ch":"stdout","data":"{\"type\":\"queue_update\",\"steering\":[],\"followUp\":[]}"}
+{"seq":13,"ts":1789544510334,"ch":"meta","kind":"terminal","status":"completed","exitCode":0,"signal":null,"data":"{\"status\":\"completed\",\"exitCode\":0,\"signal\":null}"}

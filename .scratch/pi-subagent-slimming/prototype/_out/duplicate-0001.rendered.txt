@@ -1,0 +1,37 @@
+== launch: pi -p "prototype run duplicate-0001 (duplicate)" --mode json --session-id duplicate-0001 --provider mock --model mock-model --no-skills --no-context-files --tools bash
+== session
+   version: 3
+   id: duplicate-0001
+   timestamp: 2026-09-16T07:40:46.613Z
+   cwd: C:\work\pi-subagent-prototype
+== agent_start
+== turn_start
+== message_start
+   message:
+     role: assistant
+     content: []
+     stopReason: null
+== message_update
+   assistantMessageEvent:
+     type: text_delta
+     contentIndex: 1
+     delta: duplicate terminal probe
+== message_end
+   message:
+     role: assistant
+     content: []
+     stopReason: stop
+== turn_end
+   message:
+     role: assistant
+     stopReason: stop
+   toolResults: []
+== agent_end
+   messages:
+     [0]:
+       role: assistant
+   willRetry: false
+== agent_settled
+== terminal status=completed exit=0 signal=null
+? [event queue_update] {"type":"queue_update","steering":[],"followUp":[]}
+== terminal status=completed exit=0 signal=null
