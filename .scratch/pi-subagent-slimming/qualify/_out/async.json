@@ -1,0 +1,355 @@
+{
+  "scenario": "async",
+  "startedAt": "2026-09-17T03:51:18.926Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "async returns immediately with a runId instead of blocking",
+      "ok": true,
+      "detail": {
+        "runId": "c5216b85-bf3e-4bf0-b326-657502ae79be",
+        "status": "running",
+        "elapsedMs": 1421
+      }
+    },
+    {
+      "name": "waitTimeoutMs 0 is a pure poll that returns at once",
+      "ok": true,
+      "detail": {
+        "elapsedMs": 2,
+        "status": "running"
+      }
+    },
+    {
+      "name": "the first Monitor Wait is accepted at 60000 and occupies it",
+      "ok": true,
+      "detail": {
+        "elapsedMs": 60015,
+        "status": "running",
+        "startAt": 1789617080569,
+        "endAt": 1789617140585
+      }
+    },
+    {
+      "name": "the Run is still running after the first wait, so the wait did not fabricate a result",
+      "ok": true,
+      "detail": "running"
+    },
+    {
+      "name": "the second Monitor Wait is accepted at 180000",
+      "ok": true,
+      "detail": {
+        "elapsedMs": 23556,
+        "status": "completed",
+        "startAt": 1789617140585,
+        "endAt": 1789617164141
+      }
+    },
+    {
+      "name": "the wait schedule collects the terminal state, not a timeout",
+      "ok": true,
+      "detail": {
+        "runId": "c5216b85-bf3e-4bf0-b326-657502ae79be",
+        "session": "qualify-async",
+        "status": "completed",
+        "result": "ASYNC_REPLY_QUALIFY",
+        "progress": [
+          {
+            "ts": 1789617164132,
+            "tool": "bash",
+            "summary": "SLEPT\r\n"
+          }
+        ],
+        "usage": {
+          "inputTokens": 29,
+          "outputTokens": 9,
+          "totalTokens": 1830,
+          "cost": 0.000026941
+        },
+        "timing": {
+          "startedAt": 1789617079149,
+          "endedAt": 1789617164132
+        },
+        "transcript": {
+          "available": true,
+          "outcome": "succeeded",
+          "integrity": "integrity-ok",
+          "startedAt": 1789617079149,
+          "endedAt": 1789617164132,
+          "piSettlement": {
+            "agentEnd": true,
+            "agentSettled": true,
+            "lastStdoutType": "agent_settled"
+          }
+        },
+        "viewer": {
+          "available": true,
+          "state": "ready",
+          "pid": 37800,
+          "token": "RUNNING",
+          "captureIncomplete": false,
+          "sourceCleaned": false,
+          "alertAttemptedAt": null
+        }
+      }
+    },
+    {
+      "name": "the second wait started no earlier than the first returned: waits never overlapped",
+      "ok": true,
+      "detail": {
+        "firstEndedAt": 1789617140585,
+        "secondStartedAt": 1789617140585,
+        "gapMs": 0
+      }
+    },
+    {
+      "name": "the collected Run's evidence is complete and verified",
+      "ok": true,
+      "detail": {
+        "outcome": "succeeded",
+        "endedAt": 1789617164132,
+        "finalSeq": 70,
+        "sha256": "ec67fe08efc1303bff7670b67ccf974795bd3501fe60fbdce7ffb3550e893b16"
+      }
+    },
+    {
+      "name": "the shipped viewer verifies the async Run's transcript hash",
+      "ok": true,
+      "detail": {
+        "mode": "replay",
+        "runId": "c5216b85-bf3e-4bf0-b326-657502ae79be",
+        "session": "qualify-async",
+        "header": [
+          "Run      c5216b85-bf3e-4bf0-b326-657502ae79be",
+          "Session  qualify-async    cwd C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\async-cwd    started 2026-09-17T03:51:19.1500000Z",
+          "Launch   sessionId=null  stdin=none  constraints=noSkills=true",
+          "Prompt   Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -Seconds 80; Write-Output SLEPT\". Then rep��"
+        ],
+        "terminal": true,
+        "outcome": "succeeded",
+        "token": "SUCCEEDED",
+        "integrityOk": true,
+        "integrityReasons": [],
+        "soundDecision": "success",
+        "soundWouldAttempt": false,
+        "soundSuppressed": true,
+        "sourceReleased": true,
+        "sourceCleaned": false,
+        "records": 70,
+        "replayed": 70,
+        "tailed": 0,
+        "textLength": 5723,
+        "hashExpected": "ec67fe08efc1303bff7670b67ccf974795bd3501fe60fbdce7ffb3550e893b16",
+        "hashComputed": "ec67fe08efc1303bff7670b67ccf974795bd3501fe60fbdce7ffb3550e893b16",
+        "hashBytes": 54147,
+        "hashLines": 69,
+        "fontsResolved": false,
+        "errors": []
+      }
+    },
+    {
+      "name": "the async Run's answer is present and unreduced",
+      "ok": true,
+      "detail": "ASYNC_REPLY_QUALIFY"
+    },
+    {
+      "name": "the async Run opened its own window too",
+      "ok": true,
+      "detail": [
+        {
+          "pid": 37800,
+          "process": "powershell",
+          "title": "[SUCCEEDED] Pi �� qualify-async �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� c5216b85-bf3e-4bf0-b326-657502ae79be"
+        }
+      ]
+    },
+    {
+      "name": "a 180 s wait on a Run that outlives it is occupied almost in full",
+      "ok": true,
+      "detail": {
+        "runId": "28426fad-a1a9-45bb-86d2-267fa9bf8ea9",
+        "elapsedMs": 180006,
+        "status": "running",
+        "startAt": 1789617166967,
+        "endAt": 1789617346973
+      }
+    },
+    {
+      "name": "the occupied wait reports still-running instead of fabricating a result",
+      "ok": true,
+      "detail": {
+        "runId": "28426fad-a1a9-45bb-86d2-267fa9bf8ea9",
+        "session": "qualify-async-long",
+        "status": "running",
+        "progress": [],
+        "timing": {
+          "startedAt": 1789617165535
+        },
+        "transcript": {
+          "available": true,
+          "outcome": "running",
+          "integrity": "unknown"
+        },
+        "viewer": {
+          "available": true,
+          "state": "ready",
+          "pid": 14816,
+          "token": "RUNNING",
+          "captureIncomplete": false,
+          "sourceCleaned": false,
+          "alertAttemptedAt": null
+        }
+      }
+    },
+    {
+      "name": "the following wait collects that Run's terminal state",
+      "ok": true,
+      "detail": {
+        "runId": "28426fad-a1a9-45bb-86d2-267fa9bf8ea9",
+        "session": "qualify-async-long",
+        "status": "completed",
+        "result": "ASYNC_LONG_OK",
+        "progress": [
+          {
+            "ts": 1789617369782,
+            "tool": "bash",
+            "summary": "LONG_SLEPT\r\n"
+          }
+        ],
+        "usage": {
+          "inputTokens": 135,
+          "outputTokens": 6,
+          "totalTokens": 1805,
+          "cost": 0.000069977
+        },
+        "timing": {
+          "startedAt": 1789617165535,
+          "endedAt": 1789617369782
+        },
+        "transcript": {
+          "available": true,
+          "outcome": "succeeded",
+          "integrity": "integrity-ok",
+          "startedAt": 1789617165535,
+          "endedAt": 1789617369782,
+          "piSettlement": {
+            "agentEnd": true,
+            "agentSettled": true,
+            "lastStdoutType": "agent_settled"
+          }
+        },
+        "viewer": {
+          "available": true,
+          "state": "ready",
+          "pid": 14816,
+          "token": "RUNNING",
+          "captureIncomplete": false,
+          "sourceCleaned": false,
+          "alertAttemptedAt": null
+        }
+      }
+    }
+  ],
+  "state": {
+    "RUN_ROOT": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z",
+    "registry": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\async\\registry.json",
+    "transcripts": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\async\\runs",
+    "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\async-cwd"
+  },
+  "dispatch": {
+    "runId": "c5216b85-bf3e-4bf0-b326-657502ae79be",
+    "status": "running",
+    "elapsedMs": 1421
+  },
+  "zeroPoll": {
+    "elapsedMs": 2,
+    "status": "running"
+  },
+  "wait1": {
+    "elapsedMs": 60015,
+    "status": "running",
+    "startAt": 1789617080569,
+    "endAt": 1789617140585
+  },
+  "wait2": {
+    "elapsedMs": 23556,
+    "status": "completed",
+    "startAt": 1789617140585,
+    "endAt": 1789617164141
+  },
+  "manifest": {
+    "version": 1,
+    "runId": "c5216b85-bf3e-4bf0-b326-657502ae79be",
+    "session": "qualify-async",
+    "createdAt": 1789617079150,
+    "finalizedAt": 1789617164137,
+    "terminal": {
+      "outcome": "succeeded",
+      "endedAt": 1789617164132,
+      "finalSeq": 70,
+      "sha256": "ec67fe08efc1303bff7670b67ccf974795bd3501fe60fbdce7ffb3550e893b16"
+    }
+  },
+  "replay": {
+    "status": 0,
+    "report": {
+      "mode": "replay",
+      "runId": "c5216b85-bf3e-4bf0-b326-657502ae79be",
+      "session": "qualify-async",
+      "header": [
+        "Run      c5216b85-bf3e-4bf0-b326-657502ae79be",
+        "Session  qualify-async    cwd C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\async-cwd    started 2026-09-17T03:51:19.1500000Z",
+        "Launch   sessionId=null  stdin=none  constraints=noSkills=true",
+        "Prompt   Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -Seconds 80; Write-Output SLEPT\". Then rep��"
+      ],
+      "terminal": true,
+      "outcome": "succeeded",
+      "token": "SUCCEEDED",
+      "integrityOk": true,
+      "integrityReasons": [],
+      "soundDecision": "success",
+      "soundWouldAttempt": false,
+      "soundSuppressed": true,
+      "sourceReleased": true,
+      "sourceCleaned": false,
+      "records": 70,
+      "replayed": 70,
+      "tailed": 0,
+      "textLength": 5723,
+      "hashExpected": "ec67fe08efc1303bff7670b67ccf974795bd3501fe60fbdce7ffb3550e893b16",
+      "hashComputed": "ec67fe08efc1303bff7670b67ccf974795bd3501fe60fbdce7ffb3550e893b16",
+      "hashBytes": 54147,
+      "hashLines": 69,
+      "fontsResolved": false,
+      "errors": []
+    }
+  },
+  "windowTitles": [
+    {
+      "pid": 37800,
+      "process": "powershell",
+      "title": "[SUCCEEDED] Pi �� qualify-async �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� c5216b85-bf3e-4bf0-b326-657502ae79be"
+    }
+  ],
+  "longWait": {
+    "runId": "28426fad-a1a9-45bb-86d2-267fa9bf8ea9",
+    "elapsedMs": 180006,
+    "status": "running",
+    "startAt": 1789617166967,
+    "endAt": 1789617346973
+  },
+  "longCollect": {
+    "elapsedMs": 22819,
+    "status": "completed"
+  },
+  "endedAt": "2026-09-17T03:56:09.800Z",
+  "failed": [],
+  "ok": true
+}

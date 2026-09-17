@@ -1,0 +1,155 @@
+{
+  "configPath": "C:\\Users\\qnhxx\\.codex\\config.toml",
+  "configHash": null,
+  "entry": {
+    "command": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+    "args": [
+      "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js"
+    ],
+    "env": {
+      "PI_BIN": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+      "PI_SUBAGENT_REGISTRY": "C:\\Users\\qnhxx\\.pi-subagent\\registry.json",
+      "PI_SUBAGENT_TASKS": "C:\\Users\\qnhxx\\.pi-subagent\\tasks.json"
+    },
+    "toolTimeoutSec": 3660,
+    "raw": [
+      "command = 'C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe'",
+      "args = ['C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js']",
+      "tool_timeout_sec = 3660.0",
+      "",
+      "[mcp_servers.pi-subagent.env]",
+      "PI_BIN = 'C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js'",
+      "PI_SUBAGENT_REGISTRY = 'C:\\Users\\qnhxx\\.pi-subagent\\registry.json'",
+      "PI_SUBAGENT_TASKS = 'C:\\Users\\qnhxx\\.pi-subagent\\tasks.json'",
+      ""
+    ]
+  },
+  "checks": [
+    {
+      "name": "the configured pi-subagent entry names a server script",
+      "ok": true,
+      "detail": {
+        "command": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js"
+        ],
+        "env": {
+          "PI_BIN": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+          "PI_SUBAGENT_REGISTRY": "C:\\Users\\qnhxx\\.pi-subagent\\registry.json",
+          "PI_SUBAGENT_TASKS": "C:\\Users\\qnhxx\\.pi-subagent\\tasks.json"
+        },
+        "toolTimeoutSec": 3660,
+        "raw": [
+          "command = 'C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe'",
+          "args = ['C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js']",
+          "tool_timeout_sec = 3660.0",
+          "",
+          "[mcp_servers.pi-subagent.env]",
+          "PI_BIN = 'C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js'",
+          "PI_SUBAGENT_REGISTRY = 'C:\\Users\\qnhxx\\.pi-subagent\\registry.json'",
+          "PI_SUBAGENT_TASKS = 'C:\\Users\\qnhxx\\.pi-subagent\\tasks.json'",
+          ""
+        ]
+      }
+    },
+    {
+      "name": "the configured server script exists on disk",
+      "ok": true,
+      "detail": {
+        "serverPath": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js"
+      }
+    },
+    {
+      "name": "the configured PI_BIN is set",
+      "ok": true,
+      "detail": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+    },
+    {
+      "name": "the host tool timeout can hold a 240 s sync Run",
+      "ok": true,
+      "detail": 3660
+    },
+    {
+      "name": "the configured service exposes exactly pi_delegate and pi_status",
+      "ok": true,
+      "detail": [
+        "pi_delegate",
+        "pi_status"
+      ]
+    },
+    {
+      "name": "a real Run completes through the configured service",
+      "ok": true,
+      "detail": {
+        "runId": "ca213e88-00ee-430c-92ce-6961ae043ec1",
+        "status": "completed",
+        "elapsedMs": 4001
+      }
+    },
+    {
+      "name": "its Transcript is complete and verified",
+      "ok": true,
+      "detail": {
+        "outcome": "succeeded",
+        "endedAt": 1789616402401,
+        "finalSeq": 37,
+        "sha256": "25423c1f1533c04dbf9ecd7fec4e5a05c01ee45936fde5f62631b685d0e02d9b"
+      }
+    },
+    {
+      "name": "its Run Window opened",
+      "ok": true,
+      "detail": {
+        "runId": "ca213e88-00ee-430c-92ce-6961ae043ec1",
+        "instanceId": "6c52b2d3-debc-4715-87f8-acdc9a605936",
+        "pid": 18676,
+        "startedAt": 1789616398754,
+        "updatedAt": 1789616399643,
+        "state": "ready",
+        "outcome": null,
+        "token": "RUNNING",
+        "captureIncomplete": false,
+        "alertAttemptedAt": null,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "name": "the configured service printed no unhandled failure",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "serverVersion": {
+    "name": "pi-subagent",
+    "version": "0.1.0"
+  },
+  "run": {
+    "runId": "ca213e88-00ee-430c-92ce-6961ae043ec1",
+    "status": "completed",
+    "elapsedMs": 4001
+  },
+  "transcript": {
+    "outcome": "succeeded",
+    "endedAt": 1789616402401,
+    "finalSeq": 37,
+    "sha256": "25423c1f1533c04dbf9ecd7fec4e5a05c01ee45936fde5f62631b685d0e02d9b"
+  },
+  "viewerState": {
+    "runId": "ca213e88-00ee-430c-92ce-6961ae043ec1",
+    "instanceId": "6c52b2d3-debc-4715-87f8-acdc9a605936",
+    "pid": 18676,
+    "startedAt": 1789616398754,
+    "updatedAt": 1789616399643,
+    "state": "ready",
+    "outcome": null,
+    "token": "RUNNING",
+    "captureIncomplete": false,
+    "alertAttemptedAt": null,
+    "sourceCleaned": false,
+    "lastError": ""
+  },
+  "stateDir": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-cutover-verify\\2026-09-17T03-39-58-181Z",
+  "stderr": "",
+  "ok": true
+}

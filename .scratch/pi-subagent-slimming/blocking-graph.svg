@@ -31,17 +31,17 @@
   <text x="80" y="217" class="section">上游</text>
   <path d="M 380.0 492.0 C 425.0 492.0 440.0 312.0 485.0 312.0" class="edge-done"/>
   <path d="M 380.0 492.0 C 573.8 492.0 696.2 312.0 890.0 312.0" class="edge-done"/>
-  <path d="M 785.0 312.0 C 830.0 312.0 845.0 312.0 890.0 312.0" class="edge-open"/>
+  <path d="M 785.0 312.0 C 830.0 312.0 845.0 312.0 890.0 312.0" class="edge-done"/>
   <path d="M 380.0 312.0 C 727.7 312.0 947.3 312.0 1295.0 312.0" class="edge-done"/>
-  <path d="M 1190.0 312.0 C 1235.0 312.0 1250.0 312.0 1295.0 312.0" class="edge-open"/>
+  <path d="M 1190.0 312.0 C 1235.0 312.0 1250.0 312.0 1295.0 312.0" class="edge-done"/>
   <path d="M 380.0 492.0 C 727.7 492.0 947.3 492.0 1295.0 492.0" class="edge-done"/>
-  <path d="M 1190.0 312.0 C 1235.0 312.0 1250.0 492.0 1295.0 492.0" class="edge-open"/>
-  <path d="M 785.0 312.0 C 1132.7 312.0 1352.3 312.0 1700.0 312.0" class="edge-open"/>
-  <path d="M 1595.0 492.0 C 1640.0 492.0 1655.0 312.0 1700.0 312.0" class="edge-open"/>
+  <path d="M 1190.0 312.0 C 1235.0 312.0 1250.0 492.0 1295.0 492.0" class="edge-done"/>
+  <path d="M 785.0 312.0 C 1132.7 312.0 1352.3 312.0 1700.0 312.0" class="edge-done"/>
+  <path d="M 1595.0 492.0 C 1640.0 492.0 1655.0 312.0 1700.0 312.0" class="edge-done"/>
   <path d="M 380.0 312.0 C 881.6 312.0 1198.4 492.0 1700.0 492.0" class="edge-done"/>
-  <path d="M 1595.0 312.0 C 1640.0 312.0 1655.0 492.0 1700.0 492.0" class="edge-open"/>
-  <path d="M 2000.0 312.0 C 2045.0 312.0 2060.0 312.0 2105.0 312.0" class="edge-open"/>
-  <path d="M 2000.0 492.0 C 2045.0 492.0 2060.0 312.0 2105.0 312.0" class="edge-open"/>
+  <path d="M 1595.0 312.0 C 1640.0 312.0 1655.0 492.0 1700.0 492.0" class="edge-done"/>
+  <path d="M 2000.0 312.0 C 2045.0 312.0 2060.0 312.0 2105.0 312.0" class="edge-done"/>
+  <path d="M 2000.0 492.0 C 2045.0 492.0 2060.0 312.0 2105.0 312.0" class="edge-done"/>
   <g filter="url(#shadow)">
     <rect x="80.0" y="245.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
 <text x="230.0" y="270.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="230.0" dy="0">01 Prove Codex completi</tspan><tspan x="230.0" dy="20">on transport boundaries</tspan></text>
@@ -55,40 +55,40 @@
 <text x="230.0" y="529.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="230.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="485.0" y="245.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
-<text x="635.0" y="270.0" text-anchor="middle" class="node-title" fill="#334155"><tspan x="635.0" dy="0">03 Prove the per-Run Wi</tspan><tspan x="635.0" dy="20">ndows viewer</tspan></text>
-<text x="635.0" y="322.0" text-anchor="middle" class="node-type" fill="#334155"><tspan x="635.0" dy="0">Type: wayfinder:prototype</tspan></text>
-<text x="635.0" y="349.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="635.0" dy="0">open</tspan></text>
+    <rect x="485.0" y="245.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+<text x="635.0" y="270.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="635.0" dy="0">03 Prove the per-Run Wi</tspan><tspan x="635.0" dy="20">ndows viewer</tspan></text>
+<text x="635.0" y="322.0" text-anchor="middle" class="node-type" fill="#14532d"><tspan x="635.0" dy="0">Type: wayfinder:prototype</tspan></text>
+<text x="635.0" y="349.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="635.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="890.0" y="245.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
-<text x="1040.0" y="270.0" text-anchor="middle" class="node-title" fill="#334155"><tspan x="1040.0" dy="0">04 Fix the Transcript-t</tspan><tspan x="1040.0" dy="20">o-window seam</tspan></text>
-<text x="1040.0" y="322.0" text-anchor="middle" class="node-type" fill="#334155"><tspan x="1040.0" dy="0">Type: wayfinder:grilling</tspan></text>
-<text x="1040.0" y="349.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="1040.0" dy="0">open</tspan></text>
+    <rect x="890.0" y="245.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+<text x="1040.0" y="270.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="1040.0" dy="0">04 Fix the Transcript-t</tspan><tspan x="1040.0" dy="20">o-window seam</tspan></text>
+<text x="1040.0" y="322.0" text-anchor="middle" class="node-type" fill="#14532d"><tspan x="1040.0" dy="0">Type: wayfinder:grilling</tspan></text>
+<text x="1040.0" y="349.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="1040.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="1295.0" y="245.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
-<text x="1445.0" y="270.0" text-anchor="middle" class="node-title" fill="#334155"><tspan x="1445.0" dy="0">05 Reduce the MCP core </tspan><tspan x="1445.0" dy="20">to the supported surfac</tspan></text>
-<text x="1445.0" y="322.0" text-anchor="middle" class="node-type" fill="#334155"><tspan x="1445.0" dy="0">Type: wayfinder:task</tspan></text>
-<text x="1445.0" y="349.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="1445.0" dy="0">open</tspan></text>
+    <rect x="1295.0" y="245.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+<text x="1445.0" y="270.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="1445.0" dy="0">05 Reduce the MCP core </tspan><tspan x="1445.0" dy="20">to the supported surfac</tspan></text>
+<text x="1445.0" y="322.0" text-anchor="middle" class="node-type" fill="#14532d"><tspan x="1445.0" dy="0">Type: wayfinder:task</tspan></text>
+<text x="1445.0" y="349.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="1445.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="1295.0" y="425.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
-<text x="1445.0" y="450.0" text-anchor="middle" class="node-title" fill="#334155"><tspan x="1445.0" dy="0">06 Build lossless per-R</tspan><tspan x="1445.0" dy="20">un Transcripts</tspan></text>
-<text x="1445.0" y="502.0" text-anchor="middle" class="node-type" fill="#334155"><tspan x="1445.0" dy="0">Type: wayfinder:task</tspan></text>
-<text x="1445.0" y="529.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="1445.0" dy="0">open</tspan></text>
+    <rect x="1295.0" y="425.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+<text x="1445.0" y="450.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="1445.0" dy="0">06 Build lossless per-R</tspan><tspan x="1445.0" dy="20">un Transcripts</tspan></text>
+<text x="1445.0" y="502.0" text-anchor="middle" class="node-type" fill="#14532d"><tspan x="1445.0" dy="0">Type: wayfinder:task</tspan></text>
+<text x="1445.0" y="529.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="1445.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="1700.0" y="245.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
-<text x="1850.0" y="270.0" text-anchor="middle" class="node-title" fill="#334155"><tspan x="1850.0" dy="0">07 Integrate independen</tspan><tspan x="1850.0" dy="20">t Run Windows</tspan></text>
-<text x="1850.0" y="322.0" text-anchor="middle" class="node-type" fill="#334155"><tspan x="1850.0" dy="0">Type: wayfinder:task</tspan></text>
-<text x="1850.0" y="349.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="1850.0" dy="0">open</tspan></text>
+    <rect x="1700.0" y="245.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+<text x="1850.0" y="270.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="1850.0" dy="0">07 Integrate independen</tspan><tspan x="1850.0" dy="20">t Run Windows</tspan></text>
+<text x="1850.0" y="322.0" text-anchor="middle" class="node-type" fill="#14532d"><tspan x="1850.0" dy="0">Type: wayfinder:task</tspan></text>
+<text x="1850.0" y="349.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="1850.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="1700.0" y="425.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
-<text x="1850.0" y="450.0" text-anchor="middle" class="node-title" fill="#334155"><tspan x="1850.0" dy="0">08 Adapt Pi skills to s</tspan><tspan x="1850.0" dy="20">ync-first operation</tspan></text>
-<text x="1850.0" y="502.0" text-anchor="middle" class="node-type" fill="#334155"><tspan x="1850.0" dy="0">Type: wayfinder:task</tspan></text>
-<text x="1850.0" y="529.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="1850.0" dy="0">open</tspan></text>
+    <rect x="1700.0" y="425.0" width="300" height="134" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+<text x="1850.0" y="450.0" text-anchor="middle" class="node-title" fill="#14532d"><tspan x="1850.0" dy="0">08 Adapt Pi skills to s</tspan><tspan x="1850.0" dy="20">ync-first operation</tspan></text>
+<text x="1850.0" y="502.0" text-anchor="middle" class="node-type" fill="#14532d"><tspan x="1850.0" dy="0">Type: wayfinder:task</tspan></text>
+<text x="1850.0" y="529.0" text-anchor="middle" class="node-status" fill="#14532d"><tspan x="1850.0" dy="0">resolved</tspan></text>
   </g>
   <g filter="url(#shadow)">
     <rect x="2105.0" y="245.0" width="300" height="134" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
@@ -97,6 +97,6 @@
 <text x="2255.0" y="349.0" text-anchor="middle" class="node-status" fill="#334155"><tspan x="2255.0" dy="0">open</tspan></text>
   </g>
   <rect x="80" y="875" width="2325" height="70" rx="12" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
-  <text x="105" y="905" class="legend" fill="#9a3412">当前仍可能阻塞：03 → 04、04 → 05、04 → 06、03 → 07、06 → 07、05 → 08、07 → 09、08 → 09</text>
+  <text x="105" y="905" class="legend" fill="#9a3412">当前仍可能阻塞：无</text>
   <text x="105" y="932" class="legend" fill="#9a3412">节点数：9 · 依赖边数：13</text>
 </svg>

@@ -1,0 +1,279 @@
+{
+  "scenario": "concurrent",
+  "startedAt": "2026-09-17T03:56:09.802Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "four concurrent Runs are all accepted",
+      "ok": true,
+      "detail": [
+        {
+          "runId": "3188184b-e702-45e4-aa66-b31f9be06e9a",
+          "status": "running",
+          "elapsedMs": 1590
+        },
+        {
+          "runId": "6b2114c4-e53b-4f80-a83e-892727a3ca16",
+          "status": "running",
+          "elapsedMs": 1619
+        },
+        {
+          "runId": "42172d50-9bf7-40cc-8da0-65ea9d3e3f45",
+          "status": "running",
+          "elapsedMs": 1669
+        },
+        {
+          "runId": "657993bf-67d8-4636-aff2-cf665e8c851a",
+          "status": "running",
+          "elapsedMs": 1552
+        }
+      ]
+    },
+    {
+      "name": "a fifth Run is refused with resource-busy, not queued behind four",
+      "ok": true,
+      "detail": {
+        "isError": true,
+        "json": {
+          "error": "concurrency limit (4) reached",
+          "code": "resource_busy"
+        },
+        "elapsedMs": 1
+      }
+    },
+    {
+      "name": "each Run has a live window with its own process",
+      "ok": true,
+      "detail": {
+        "3188184b-e702-45e4-aa66-b31f9be06e9a": 22752,
+        "6b2114c4-e53b-4f80-a83e-892727a3ca16": 40200,
+        "42172d50-9bf7-40cc-8da0-65ea9d3e3f45": 19496,
+        "657993bf-67d8-4636-aff2-cf665e8c851a": 19472
+      }
+    },
+    {
+      "name": "the desktop really holds one window per Run, all four at once",
+      "ok": true,
+      "detail": [
+        {
+          "pid": 19472,
+          "process": "powershell",
+          "title": "[RUNNING] Pi �� qualify-conc-3 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 657993bf-67d8-4636-aff2-cf665e8c851a"
+        },
+        {
+          "pid": 19496,
+          "process": "powershell",
+          "title": "[RUNNING] Pi �� qualify-conc-2 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 42172d50-9bf7-40cc-8da0-65ea9d3e3f45"
+        },
+        {
+          "pid": 22752,
+          "process": "powershell",
+          "title": "[RUNNING] Pi �� qualify-conc-0 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 3188184b-e702-45e4-aa66-b31f9be06e9a"
+        },
+        {
+          "pid": 40200,
+          "process": "powershell",
+          "title": "[RUNNING] Pi �� qualify-conc-1 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 6b2114c4-e53b-4f80-a83e-892727a3ca16"
+        }
+      ]
+    },
+    {
+      "name": "each Run owns a distinct transcript bundle",
+      "ok": true,
+      "detail": [
+        "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\concurrent\\runs\\3188184b-e702-45e4-aa66-b31f9be06e9a",
+        "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\concurrent\\runs\\6b2114c4-e53b-4f80-a83e-892727a3ca16",
+        "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\concurrent\\runs\\42172d50-9bf7-40cc-8da0-65ea9d3e3f45",
+        "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\concurrent\\runs\\657993bf-67d8-4636-aff2-cf665e8c851a"
+      ]
+    },
+    {
+      "name": "all four concurrent Runs finish completed",
+      "ok": true,
+      "detail": [
+        {
+          "runId": "3188184b-e702-45e4-aa66-b31f9be06e9a",
+          "status": "completed"
+        },
+        {
+          "runId": "6b2114c4-e53b-4f80-a83e-892727a3ca16",
+          "status": "completed"
+        },
+        {
+          "runId": "42172d50-9bf7-40cc-8da0-65ea9d3e3f45",
+          "status": "completed"
+        },
+        {
+          "runId": "657993bf-67d8-4636-aff2-cf665e8c851a",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "name": "every concurrent Run's transcript verifies and classifies SUCCEEDED",
+      "ok": true,
+      "detail": [
+        {
+          "token": "SUCCEEDED",
+          "integrityOk": true
+        },
+        {
+          "token": "SUCCEEDED",
+          "integrityOk": true
+        },
+        {
+          "token": "SUCCEEDED",
+          "integrityOk": true
+        },
+        {
+          "token": "SUCCEEDED",
+          "integrityOk": true
+        }
+      ]
+    },
+    {
+      "name": "completed windows stay open until closed by hand",
+      "ok": true,
+      "detail": [
+        "ChatGPT",
+        "��ͼ - ����ջ��ʵ�ַ��� - Google Chrome",
+        "Clash Verge",
+        "06-build-lossless-run-transcripts.md - pi-subagent - Visual Studio Code",
+        "����UUԶ��",
+        "[SUCCEEDED] Pi �� qualify-conc-3 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 657993bf-67d8-4636-aff2-cf665e8c851a",
+        "[SUCCEEDED] Pi �� qualify-conc-2 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 42172d50-9bf7-40cc-8da0-65ea9d3e3f45",
+        "[INCOMPLETE] Pi �� visual-incomplete �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 82d4a7a3-0d39-40bc-bca5-eaac9a624fdf",
+        "[SUCCEEDED] Pi �� qualify-conc-0 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 3188184b-e702-45e4-aa66-b31f9be06e9a",
+        "[SUCCEEDED] Pi �� visual-success �� First use the bash tool once to run exactly: echo GLYPH_CHECK. Then reply with e �� 533c9190-62a0-4361-b7cc-76d0f77e1591",
+        "[INCOMPLETE] Pi �� qualify-fixture �� fixture with a capture error �� capture-error-fixture",
+        "[SUCCEEDED] Pi �� visual-running �� Use the bash tool to run these 10 commands one at a time, each in its own separa �� d343bf55-e9e9-49b0-b498-326521c3c6b9",
+        "[SUCCEEDED] Pi �� qualify-conc-1 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 6b2114c4-e53b-4f80-a83e-892727a3ca16",
+        "com.agentskills.desktop-siw",
+        "Windows ��������",
+        "����˽����",
+        "Windows PowerShell",
+        "�����е�����",
+        "ZCode"
+      ]
+    },
+    {
+      "name": "no window died when its Run finished",
+      "ok": true,
+      "detail": {
+        "3188184b-e702-45e4-aa66-b31f9be06e9a": 22752,
+        "6b2114c4-e53b-4f80-a83e-892727a3ca16": 40200,
+        "42172d50-9bf7-40cc-8da0-65ea9d3e3f45": 19496,
+        "657993bf-67d8-4636-aff2-cf665e8c851a": 19472
+      }
+    }
+  ],
+  "state": {
+    "RUN_ROOT": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z",
+    "registry": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\concurrent\\registry.json",
+    "transcripts": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\concurrent\\runs"
+  },
+  "dispatched": [
+    {
+      "runId": "3188184b-e702-45e4-aa66-b31f9be06e9a",
+      "status": "running",
+      "elapsedMs": 1590
+    },
+    {
+      "runId": "6b2114c4-e53b-4f80-a83e-892727a3ca16",
+      "status": "running",
+      "elapsedMs": 1619
+    },
+    {
+      "runId": "42172d50-9bf7-40cc-8da0-65ea9d3e3f45",
+      "status": "running",
+      "elapsedMs": 1669
+    },
+    {
+      "runId": "657993bf-67d8-4636-aff2-cf665e8c851a",
+      "status": "running",
+      "elapsedMs": 1552
+    }
+  ],
+  "fifth": {
+    "isError": true,
+    "json": {
+      "error": "concurrency limit (4) reached",
+      "code": "resource_busy"
+    },
+    "elapsedMs": 1
+  },
+  "windowPids": {
+    "3188184b-e702-45e4-aa66-b31f9be06e9a": 22752,
+    "6b2114c4-e53b-4f80-a83e-892727a3ca16": 40200,
+    "42172d50-9bf7-40cc-8da0-65ea9d3e3f45": 19496,
+    "657993bf-67d8-4636-aff2-cf665e8c851a": 19472
+  },
+  "windowTitles": [
+    {
+      "pid": 19472,
+      "process": "powershell",
+      "title": "[RUNNING] Pi �� qualify-conc-3 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 657993bf-67d8-4636-aff2-cf665e8c851a"
+    },
+    {
+      "pid": 19496,
+      "process": "powershell",
+      "title": "[RUNNING] Pi �� qualify-conc-2 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 42172d50-9bf7-40cc-8da0-65ea9d3e3f45"
+    },
+    {
+      "pid": 22752,
+      "process": "powershell",
+      "title": "[RUNNING] Pi �� qualify-conc-0 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 3188184b-e702-45e4-aa66-b31f9be06e9a"
+    },
+    {
+      "pid": 40200,
+      "process": "powershell",
+      "title": "[RUNNING] Pi �� qualify-conc-1 �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 6b2114c4-e53b-4f80-a83e-892727a3ca16"
+    }
+  ],
+  "collected": [
+    {
+      "runId": "3188184b-e702-45e4-aa66-b31f9be06e9a",
+      "status": "completed"
+    },
+    {
+      "runId": "6b2114c4-e53b-4f80-a83e-892727a3ca16",
+      "status": "completed"
+    },
+    {
+      "runId": "42172d50-9bf7-40cc-8da0-65ea9d3e3f45",
+      "status": "completed"
+    },
+    {
+      "runId": "657993bf-67d8-4636-aff2-cf665e8c851a",
+      "status": "completed"
+    }
+  ],
+  "replayTokens": [
+    {
+      "token": "SUCCEEDED",
+      "integrityOk": true
+    },
+    {
+      "token": "SUCCEEDED",
+      "integrityOk": true
+    },
+    {
+      "token": "SUCCEEDED",
+      "integrityOk": true
+    },
+    {
+      "token": "SUCCEEDED",
+      "integrityOk": true
+    }
+  ],
+  "endedAt": "2026-09-17T03:57:14.502Z",
+  "failed": [],
+  "ok": true
+}

@@ -1,0 +1,177 @@
+{
+  "scenario": "capture-disabled",
+  "startedAt": "2026-09-17T03:51:06.431Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "the Run still succeeds with no usable transcript storage",
+      "ok": true,
+      "detail": {
+        "runId": "cefe07d3-1d23-4e7a-b2fb-59e2871a4b3c",
+        "session": {
+          "name": "qualify-capture-disabled",
+          "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled-cwd",
+          "goal": "qualification: no usable evidence storage still runs the Run",
+          "status": "idle",
+          "constraints": {
+            "noSkills": true
+          },
+          "progress": [
+            {
+              "ts": 1789617069460,
+              "tool": "bash",
+              "summary": "CAPTURE_DISABLED_OK\n"
+            }
+          ],
+          "lastActive": 1789617069461,
+          "msgCount": 1,
+          "lastSummary": "CAPTURE_DISABLED_REPLY"
+        },
+        "status": "completed",
+        "result": "CAPTURE_DISABLED_REPLY",
+        "progress": [
+          {
+            "ts": 1789617069460,
+            "tool": "bash",
+            "summary": "CAPTURE_DISABLED_OK\n"
+          }
+        ],
+        "progressTruncated": false,
+        "usage": {
+          "inputTokens": 102,
+          "outputTokens": 11,
+          "totalTokens": 1777,
+          "cost": 0.000059972
+        }
+      }
+    },
+    {
+      "name": "pi_status reports the Transcript as unavailable, with a reason",
+      "ok": true,
+      "detail": {
+        "available": false,
+        "reason": "transcript root is a reparse point: C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled\\runs-link",
+        "integrity": "unknown"
+      }
+    },
+    {
+      "name": "pi_status never claims integrity it cannot support",
+      "ok": true,
+      "detail": {
+        "available": false,
+        "reason": "transcript root is a reparse point: C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled\\runs-link",
+        "integrity": "unknown"
+      }
+    },
+    {
+      "name": "no Run Window is opened when there is nothing to show",
+      "ok": true,
+      "detail": {
+        "titles": [
+          "ChatGPT",
+          "��ͼ - ����ջ��ʵ�ַ��� - Google Chrome",
+          "Clash Verge",
+          "06-build-lossless-run-transcripts.md - pi-subagent - Visual Studio Code",
+          "����UUԶ��",
+          "[INCOMPLETE] Pi �� visual-incomplete �� Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -S �� 82d4a7a3-0d39-40bc-bca5-eaac9a624fdf",
+          "[SUCCEEDED] Pi �� visual-success �� First use the bash tool once to run exactly: echo GLYPH_CHECK. Then reply with e �� 533c9190-62a0-4361-b7cc-76d0f77e1591",
+          "[SUCCEEDED] Pi �� visual-running �� Use the bash tool to run these 10 commands one at a time, each in its own separa �� d343bf55-e9e9-49b0-b498-326521c3c6b9",
+          "com.agentskills.desktop-siw",
+          "Windows ��������",
+          "����˽����",
+          "Windows PowerShell",
+          "�����е�����",
+          "ZCode"
+        ]
+      }
+    },
+    {
+      "name": "no bundle was written through the unusable root",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "the Run is still recorded in the registry",
+      "ok": true,
+      "detail": [
+        {
+          "name": "qualify-capture-disabled",
+          "piSessionId": "01a0ad7d-539d-75a8-aed9-8d380607623d",
+          "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled-cwd",
+          "goal": "qualification: no usable evidence storage still runs the Run",
+          "status": "idle",
+          "constraints": {
+            "noSkills": true
+          },
+          "progress": [
+            {
+              "ts": 1789617069460,
+              "tool": "bash",
+              "summary": "CAPTURE_DISABLED_OK\n"
+            }
+          ],
+          "lastActive": 1789617069461,
+          "msgCount": 1,
+          "lastSummary": "CAPTURE_DISABLED_REPLY"
+        }
+      ]
+    },
+    {
+      "name": "the server survived with no unhandled failure",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "state": {
+    "RUN_ROOT": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z",
+    "registry": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled\\registry.json",
+    "transcripts": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled\\runs-link",
+    "realRoot": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled\\runs-real",
+    "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled-cwd",
+    "link": true
+  },
+  "run": {
+    "runId": "cefe07d3-1d23-4e7a-b2fb-59e2871a4b3c",
+    "status": "completed",
+    "result": "CAPTURE_DISABLED_REPLY"
+  },
+  "status": {
+    "runId": "cefe07d3-1d23-4e7a-b2fb-59e2871a4b3c",
+    "session": "qualify-capture-disabled",
+    "status": "completed",
+    "result": "CAPTURE_DISABLED_REPLY",
+    "progress": [
+      {
+        "ts": 1789617069460,
+        "tool": "bash",
+        "summary": "CAPTURE_DISABLED_OK\n"
+      }
+    ],
+    "usage": {
+      "inputTokens": 102,
+      "outputTokens": 11,
+      "totalTokens": 1777,
+      "cost": 0.000059972
+    },
+    "timing": {
+      "startedAt": 1789617066656,
+      "endedAt": 1789617069461
+    },
+    "transcript": {
+      "available": false,
+      "reason": "transcript root is a reparse point: C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-disabled\\runs-link",
+      "integrity": "unknown"
+    }
+  },
+  "stderr": "",
+  "endedAt": "2026-09-17T03:51:10.115Z",
+  "failed": [],
+  "ok": true
+}

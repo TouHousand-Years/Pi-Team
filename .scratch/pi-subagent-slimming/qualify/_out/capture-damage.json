@@ -1,0 +1,300 @@
+{
+  "scenario": "capture-damage",
+  "startedAt": "2026-09-17T03:51:10.116Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "the Run completes before its evidence is damaged",
+      "ok": true,
+      "detail": {
+        "runId": "62c92120-b3be-48ef-a49b-f871bd68a36b",
+        "session": {
+          "name": "qualify-damage",
+          "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage-cwd",
+          "goal": "qualification: damaged evidence is marked, not repaired",
+          "status": "idle",
+          "constraints": {
+            "noSkills": true
+          },
+          "progress": [
+            {
+              "ts": 1789617073821,
+              "tool": "bash",
+              "summary": "DAMAGE_MARKER_OK\n"
+            }
+          ],
+          "lastActive": 1789617073821,
+          "msgCount": 1,
+          "lastSummary": "DAMAGE_REPLY_OK"
+        },
+        "status": "completed",
+        "result": "DAMAGE_REPLY_OK",
+        "progress": [
+          {
+            "ts": 1789617073821,
+            "tool": "bash",
+            "summary": "DAMAGE_MARKER_OK\n"
+          }
+        ],
+        "progressTruncated": false,
+        "usage": {
+          "inputTokens": 77,
+          "outputTokens": 8,
+          "totalTokens": 1749,
+          "cost": 0.000046487000000000004
+        }
+      }
+    },
+    {
+      "name": "a replacement window is launched once the previous one is confirmed gone",
+      "ok": true,
+      "detail": {
+        "available": true,
+        "state": "ready",
+        "pid": 11824,
+        "token": "RUNNING",
+        "captureIncomplete": false,
+        "sourceCleaned": false,
+        "alertAttemptedAt": 1789617070682
+      }
+    },
+    {
+      "name": "the window marks the damaged transcript INCOMPLETE",
+      "ok": true,
+      "detail": {
+        "runId": "62c92120-b3be-48ef-a49b-f871bd68a36b",
+        "instanceId": "5542984c-9800-4598-8fd9-24b22835066a",
+        "pid": 11824,
+        "startedAt": 1789617074426,
+        "updatedAt": 1789617075712,
+        "state": "ready",
+        "outcome": "succeeded",
+        "token": "INCOMPLETE",
+        "captureIncomplete": true,
+        "alertAttemptedAt": 1789617070682,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "name": "the shipped viewer names the damage instead of repairing it",
+      "ok": true,
+      "detail": [
+        "sequence-gap: expected 2, got 3",
+        "terminal-hash-mismatch"
+      ]
+    },
+    {
+      "name": "the surviving content is still shown in full",
+      "ok": true,
+      "detail": "== launch (process-boundary input recorded by the wrapper)\n   promptSubmitted: Use the bash tool to run exactly: echo DAMAGE_MARKER_OK. Then reply with exactly: DAMAGE_REPLY_OK\n   promptEffective: Use the bash tool to run exactly: echo DAMAGE_MARKER_OK. Then reply with exactly: DAMAGE_REPLY_OK\n   cwd: C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage-cwd"
+    },
+    {
+      "name": "damage to the evidence never rewrites the Run's own outcome",
+      "ok": true,
+      "detail": "completed"
+    },
+    {
+      "name": "a capture error recorded at capture time marks the window INCOMPLETE",
+      "ok": true,
+      "detail": {
+        "runId": "capture-error-fixture",
+        "instanceId": "016a942e-0c6f-4453-bd88-73aac4c5718b",
+        "pid": 27784,
+        "startedAt": 1789617077002,
+        "updatedAt": 1789617078081,
+        "state": "ready",
+        "outcome": "incomplete",
+        "token": "INCOMPLETE",
+        "captureIncomplete": true,
+        "alertAttemptedAt": 1789617077002,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "name": "the window shows the capture error itself, not a summary",
+      "ok": true,
+      "detail": [
+        "capture-error: injected: storage write failed mid-Run"
+      ]
+    }
+  ],
+  "state": {
+    "RUN_ROOT": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z",
+    "registry": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage\\registry.json",
+    "transcripts": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage\\runs",
+    "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage-cwd"
+  },
+  "damage": {
+    "path": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage\\runs\\62c92120-b3be-48ef-a49b-f871bd68a36b\\transcript.jsonl",
+    "droppedLine": "{\"v\":1,\"seq\":2,\"tUtc\":\"2026-09-17T03:51:10.353Z\",\"tMono\":180.5652,\"ch\":\"meta\",\"kind\":\"state\",\"state\":\"starting\"}",
+    "droppedIndex": 1
+  },
+  "reopen": {
+    "available": true,
+    "state": "ready",
+    "pid": 11824,
+    "token": "RUNNING",
+    "captureIncomplete": false,
+    "sourceCleaned": false,
+    "alertAttemptedAt": 1789617070682
+  },
+  "damagedViewerState": {
+    "runId": "62c92120-b3be-48ef-a49b-f871bd68a36b",
+    "instanceId": "5542984c-9800-4598-8fd9-24b22835066a",
+    "pid": 11824,
+    "startedAt": 1789617074426,
+    "updatedAt": 1789617075712,
+    "state": "ready",
+    "outcome": "succeeded",
+    "token": "INCOMPLETE",
+    "captureIncomplete": true,
+    "alertAttemptedAt": 1789617070682,
+    "sourceCleaned": false,
+    "lastError": ""
+  },
+  "replay": {
+    "status": 0,
+    "report": {
+      "mode": "replay",
+      "runId": "62c92120-b3be-48ef-a49b-f871bd68a36b",
+      "session": "qualify-damage",
+      "header": [
+        "Run      62c92120-b3be-48ef-a49b-f871bd68a36b",
+        "Session  qualify-damage    cwd C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage-cwd    started 2026-09-17T03:51:10.3390000Z",
+        "Launch   sessionId=null  stdin=none  constraints=noSkills=true",
+        "Prompt   Use the bash tool to run exactly: echo DAMAGE_MARKER_OK. Then reply with exactly: DAMAGE_REPLY_OK"
+      ],
+      "terminal": true,
+      "outcome": "succeeded",
+      "token": "INCOMPLETE",
+      "integrityOk": false,
+      "integrityReasons": [
+        "sequence-gap: expected 2, got 3",
+        "terminal-hash-mismatch"
+      ],
+      "soundDecision": "warning",
+      "soundWouldAttempt": false,
+      "soundSuppressed": true,
+      "sourceReleased": true,
+      "sourceCleaned": false,
+      "records": 38,
+      "replayed": 38,
+      "tailed": 0,
+      "textLength": 5283,
+      "hashExpected": "7d88aa2f013f5b945877d3404ac0111e6e716c16cbb8136ca0b38e9c806eb1cb",
+      "hashComputed": "aa99620869cdcc8847a80456446813d5d85f252d9b34ad371d9ad23b4f4d4731",
+      "hashBytes": 25152,
+      "hashLines": 37,
+      "fontsResolved": false,
+      "errors": []
+    },
+    "textHasAnswer": true
+  },
+  "statusAfterDamage": {
+    "runId": "62c92120-b3be-48ef-a49b-f871bd68a36b",
+    "session": "qualify-damage",
+    "status": "completed",
+    "result": "DAMAGE_REPLY_OK",
+    "progress": [
+      {
+        "ts": 1789617073821,
+        "tool": "bash",
+        "summary": "DAMAGE_MARKER_OK\n"
+      }
+    ],
+    "usage": {
+      "inputTokens": 77,
+      "outputTokens": 8,
+      "totalTokens": 1749,
+      "cost": 0.000046487000000000004
+    },
+    "timing": {
+      "startedAt": 1789617070338,
+      "endedAt": 1789617073821
+    },
+    "transcript": {
+      "available": true,
+      "outcome": "succeeded",
+      "integrity": "integrity-ok",
+      "startedAt": 1789617070338,
+      "endedAt": 1789617073821,
+      "piSettlement": {
+        "agentEnd": true,
+        "agentSettled": true,
+        "lastStdoutType": "agent_settled"
+      }
+    },
+    "viewer": {
+      "available": true,
+      "state": "ready",
+      "pid": 11824,
+      "token": "INCOMPLETE",
+      "captureIncomplete": true,
+      "sourceCleaned": false,
+      "alertAttemptedAt": 1789617070682
+    }
+  },
+  "statusIntegrityAfterDamage": "integrity-ok",
+  "captureErrorWindowState": {
+    "runId": "capture-error-fixture",
+    "instanceId": "016a942e-0c6f-4453-bd88-73aac4c5718b",
+    "pid": 27784,
+    "startedAt": 1789617077002,
+    "updatedAt": 1789617078081,
+    "state": "ready",
+    "outcome": "incomplete",
+    "token": "INCOMPLETE",
+    "captureIncomplete": true,
+    "alertAttemptedAt": 1789617077002,
+    "sourceCleaned": false,
+    "lastError": ""
+  },
+  "captureErrorReplay": {
+    "report": {
+      "mode": "replay",
+      "runId": "capture-error-fixture",
+      "session": "qualify-fixture",
+      "header": [
+        "Run      capture-error-fixture",
+        "Session  qualify-fixture    cwd C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\capture-damage-cwd    started 2026-09-17T03:51:16.6540000Z",
+        "Launch   sessionId=null  stdin=none  constraints=none",
+        "Prompt   fixture with a capture error"
+      ],
+      "terminal": true,
+      "outcome": "incomplete",
+      "token": "INCOMPLETE",
+      "integrityOk": false,
+      "integrityReasons": [
+        "capture-error: injected: storage write failed mid-Run"
+      ],
+      "soundDecision": "warning",
+      "soundWouldAttempt": false,
+      "soundSuppressed": true,
+      "sourceReleased": true,
+      "sourceCleaned": false,
+      "records": 5,
+      "replayed": 5,
+      "tailed": 0,
+      "textLength": 926,
+      "hashExpected": "bad58b480450a98425f889354e148e84e35862005732bf626e8c1052be661cf3",
+      "hashComputed": "bad58b480450a98425f889354e148e84e35862005732bf626e8c1052be661cf3",
+      "hashBytes": 805,
+      "hashLines": 4,
+      "fontsResolved": false,
+      "errors": []
+    },
+    "textShowsError": true
+  },
+  "endedAt": "2026-09-17T03:51:18.924Z",
+  "failed": [],
+  "ok": true
+}

@@ -1,0 +1,162 @@
+{
+  "scenario": "surface",
+  "startedAt": "2026-09-17T03:50:21.503Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "exactly pi_delegate and pi_status are exposed",
+      "ok": true,
+      "detail": [
+        "pi_delegate",
+        "pi_status"
+      ]
+    },
+    {
+      "name": "server advertises the pi-subagent name",
+      "ok": true
+    },
+    {
+      "name": "retired tool pi_kill is rejected as unknown",
+      "ok": true,
+      "detail": {
+        "isError": true,
+        "text": "{\"error\":\"unknown tool\"}"
+      }
+    },
+    {
+      "name": "retired tool pi_plan is rejected as unknown",
+      "ok": true,
+      "detail": {
+        "isError": true,
+        "text": "{\"error\":\"unknown tool\"}"
+      }
+    },
+    {
+      "name": "retired tool pi_session_list is rejected as unknown",
+      "ok": true,
+      "detail": {
+        "isError": true,
+        "text": "{\"error\":\"unknown tool\"}"
+      }
+    },
+    {
+      "name": "retired tool pi_task_create is rejected as unknown",
+      "ok": true,
+      "detail": {
+        "isError": true,
+        "text": "{\"error\":\"unknown tool\"}"
+      }
+    },
+    {
+      "name": "retired tool pi_task_status is rejected as unknown",
+      "ok": true,
+      "detail": {
+        "isError": true,
+        "text": "{\"error\":\"unknown tool\"}"
+      }
+    },
+    {
+      "name": "pi_delegate without prompt is an invalid-arg error",
+      "ok": true,
+      "detail": {
+        "error": "prompt required",
+        "code": "invalid_arg"
+      }
+    },
+    {
+      "name": "new session without goal is rejected before any Pi spawn",
+      "ok": true,
+      "detail": {
+        "error": "goal required to create session",
+        "code": "goal_required"
+      }
+    },
+    {
+      "name": "pi_delegate requires prompt+session and carries mode/runTimeoutMs",
+      "ok": true
+    },
+    {
+      "name": "pi_status requires runId and carries waitTimeoutMs/openWindow",
+      "ok": true
+    },
+    {
+      "name": "server stderr reports no problem",
+      "ok": true,
+      "detail": "[pi-subagent] run window unavailable: disabled by PI_SUBAGENT_VIEWER=off\n"
+    }
+  ],
+  "tools": [
+    {
+      "name": "pi_delegate",
+      "description": "委派任务给 Pi 子代理（默认 async）",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string"
+          },
+          "goal": {
+            "type": "string"
+          },
+          "constraints": {
+            "type": "object"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "sync",
+              "async"
+            ]
+          },
+          "runTimeoutMs": {
+            "type": "number"
+          },
+          "allowUnknownTools": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "prompt",
+          "session"
+        ]
+      }
+    },
+    {
+      "name": "pi_status",
+      "description": "取 run 结果（long-poll）；openWindow 可重开该 Run 的只读窗口",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "waitTimeoutMs": {
+            "type": "number"
+          },
+          "openWindow": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "runId"
+        ]
+      }
+    }
+  ],
+  "endedAt": "2026-09-17T03:50:21.745Z",
+  "failed": [],
+  "ok": true
+}

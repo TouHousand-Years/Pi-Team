@@ -1,0 +1,62 @@
+{
+  "createdAt": "2026-09-17T03:39:15.528Z",
+  "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+  "build": {
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "sha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "gitHead": "64a0f6025e1663900a8393b23ba7c0b552f283c1"
+  },
+  "backupDir": "C:\\Users\\qnhxx\\.pi-subagent\\cutover-backup-2026-09-17T03-39-15-032Z",
+  "config": {
+    "path": "C:\\Users\\qnhxx\\.codex\\config.toml",
+    "sha256Before": "01b7f6b9beb59ce671f6771c269d692581ed792f7978984799c4007acf7215a8",
+    "configuredServerBefore": "C:\\Users\\qnhxx\\Documents\\Codex\\tools\\pi-subagent\\dist\\server.js",
+    "backupPath": "C:\\Users\\qnhxx\\.pi-subagent\\cutover-backup-2026-09-17T03-39-15-032Z\\config.toml",
+    "appliedServer": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "sha256After": "bc4904ab0c942be7d928ff99da85e02eca6cb8c7e1cc7bb5b547accb4e13cb0b"
+  },
+  "registry": {
+    "path": "C:\\Users\\qnhxx\\.pi-subagent\\registry.json",
+    "sha256Before": "df6e59e586bcfd0a4f93b4a0cabacdbf3e0812f3d50aa4b77b29935b4991be02",
+    "backupPath": "C:\\Users\\qnhxx\\.pi-subagent\\cutover-backup-2026-09-17T03-39-15-032Z\\registry.json"
+  },
+  "legacyTasks": {
+    "path": "C:\\Users\\qnhxx\\.pi-subagent\\tasks.json",
+    "present": false,
+    "touched": false
+  },
+  "skill": {
+    "path": "C:\\Users\\qnhxx\\.skills-manager\\skills\\pi-subagent",
+    "versionBefore": "2.0.0",
+    "backupPath": "C:\\Users\\qnhxx\\.pi-subagent\\cutover-backup-2026-09-17T03-39-15-032Z\\installed-skill",
+    "files": [
+      {
+        "rel": "references/delegation-patterns.md",
+        "sha256": "20def4106a58c5ee89111478c4df2e245d2fc2a7ee25789fc5440f0e631099e6",
+        "bytes": 5089
+      },
+      {
+        "rel": "references/tool-call-loop-antipattern.md",
+        "sha256": "3f8d6969f604e5806d3306fd6d66ff92ceb5efc76fab792f814de518cdc49080",
+        "bytes": 4857
+      },
+      {
+        "rel": "SKILL.md",
+        "sha256": "8da1f66448fcfdec752a9f5542375fc151984a287aaf80c54b2b834d289aaa39",
+        "bytes": 11175
+      }
+    ],
+    "versionAfter": "3.0.0"
+  },
+  "liveCheckout": {
+    "path": "C:\\Users\\qnhxx\\Documents\\Codex\\tools\\pi-subagent",
+    "head": "21fe33468295c415489ec697a48355e76ccb6a04",
+    "status": "M README.md\n M skills/pi-subagent/SKILL.md\n M skills/pi-subagent/references/delegation-patterns.md\n M src/scheduler/plan.ts\n M src/server.ts\n M src/tools/delegate.ts\n M test/scheduler.test.ts"
+  },
+  "preconditions": {
+    "problems": [],
+    "clear": true
+  },
+  "appliedAt": "2026-09-17T03:39:57.958Z",
+  "rolledBackAt": "2026-09-17T03:39:46.944Z"
+}

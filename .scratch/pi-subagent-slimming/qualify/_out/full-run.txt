@@ -1,0 +1,144 @@
+state root: C:\Users\qnhxx\AppData\Local\Temp\pi-subagent-qualify\2026-09-17T03-50-21-501Z
+
+=== surface ===
+  PASS exactly pi_delegate and pi_status are exposed
+  PASS server advertises the pi-subagent name
+  PASS retired tool pi_kill is rejected as unknown
+  PASS retired tool pi_plan is rejected as unknown
+  PASS retired tool pi_session_list is rejected as unknown
+  PASS retired tool pi_task_create is rejected as unknown
+  PASS retired tool pi_task_status is rejected as unknown
+  PASS pi_delegate without prompt is an invalid-arg error
+  PASS new session without goal is rejected before any Pi spawn
+  PASS pi_delegate requires prompt+session and carries mode/runTimeoutMs
+  PASS pi_status requires runId and carries waitTimeoutMs/openWindow
+  PASS server stderr reports no problem
+OK   surface: 12/12 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\surface.json
+
+=== compat ===
+  PASS a Run still works while the legacy registry is loaded
+  PASS no legacy session was dropped by the rewrite
+  PASS all 50 legacy session records survive field-for-field
+  PASS no legacy record was silently marked running
+  PASS the new session was appended in the same v1 shape
+  PASS a legacy session continues with the piSessionId from the legacy file
+OK   compat: 6/6 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\compat.json
+
+=== sync ===
+  PASS sync returns the terminal state inside the call
+  PASS sync returned well inside the 240 s deadline the skill mandates
+  PASS sync returned inside the host's observed 300 s MCP-call ceiling
+  PASS the result carries Pi's own answer
+  PASS the Transcript terminal outcome is succeeded
+  PASS the Transcript recorded no capture error
+  PASS the launch record keeps the submitted prompt byte-for-byte
+  PASS the launch record names the effective prompt and cwd
+  PASS pi_status reports integrity-ok for the completed Run
+  PASS pi_status carries terminal timing
+  PASS a Run Window was opened and reported ready
+  PASS the window is not marked incomplete for a clean Run
+  PASS exactly one real window exists for the Run
+  PASS the window title carries the token, session, prompt and Run id
+  PASS the window's pid is the process PowerShell reports
+  PASS reopen focuses the live window instead of duplicating it
+  PASS reopen reports the window as ready
+  PASS reopening never replays the completion sound
+  PASS the shipped viewer verifies the transcript hash
+  PASS the shipped viewer classifies the Run SUCCEEDED with a success sound decision
+  PASS the rendered window shows the prompt and Pi's answer, unreduced
+  PASS the creating Run starts a fresh Pi session (no session id handed over)
+  PASS a continuation Run is handed the session's recorded Pi session id
+  PASS the continuation opens its own window
+OK   sync: 24/24 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\sync.json
+
+=== timeout ===
+  PASS the Run is reported as a timeout, not as success
+  PASS the timeout fired near its 10 s deadline, not after the Run's own 60 s
+  PASS the Transcript terminal outcome is incomplete
+  PASS pi_status marks the Transcript incomplete rather than available-and-clean
+  PASS the live window ends up INCOMPLETE, not SUCCEEDED
+  PASS the live window made exactly one (warning) sound attempt, and recorded it
+  PASS the window is still alive and open after the Run died
+  PASS the shipped viewer shows INCOMPLETE and refuses a success sound
+  PASS exactly one Run was started: nothing was auto-redispatched
+OK   timeout: 9/9 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\timeout.json
+
+=== capture-disabled ===
+  PASS the Run still succeeds with no usable transcript storage
+  PASS pi_status reports the Transcript as unavailable, with a reason
+  PASS pi_status never claims integrity it cannot support
+  PASS no Run Window is opened when there is nothing to show
+  PASS no bundle was written through the unusable root
+  PASS the Run is still recorded in the registry
+  PASS the server survived with no unhandled failure
+OK   capture-disabled: 7/7 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\capture-disabled.json
+
+=== capture-damage ===
+  PASS the Run completes before its evidence is damaged
+  PASS a replacement window is launched once the previous one is confirmed gone
+  PASS the window marks the damaged transcript INCOMPLETE
+  PASS the shipped viewer names the damage instead of repairing it
+  PASS the surviving content is still shown in full
+  PASS damage to the evidence never rewrites the Run's own outcome
+  PASS a capture error recorded at capture time marks the window INCOMPLETE
+  PASS the window shows the capture error itself, not a summary
+OK   capture-damage: 8/8 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\capture-damage.json
+
+=== async ===
+  PASS async returns immediately with a runId instead of blocking
+  PASS waitTimeoutMs 0 is a pure poll that returns at once
+  PASS the first Monitor Wait is accepted at 60000 and occupies it
+  PASS the Run is still running after the first wait, so the wait did not fabricate a result
+  PASS the second Monitor Wait is accepted at 180000
+  PASS the wait schedule collects the terminal state, not a timeout
+  PASS the second wait started no earlier than the first returned: waits never overlapped
+  PASS the collected Run's evidence is complete and verified
+  PASS the shipped viewer verifies the async Run's transcript hash
+  PASS the async Run's answer is present and unreduced
+  PASS the async Run opened its own window too
+  PASS a 180 s wait on a Run that outlives it is occupied almost in full
+  PASS the occupied wait reports still-running instead of fabricating a result
+  PASS the following wait collects that Run's terminal state
+OK   async: 14/14 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\async.json
+
+=== concurrent ===
+  PASS four concurrent Runs are all accepted
+  PASS a fifth Run is refused with resource-busy, not queued behind four
+  PASS each Run has a live window with its own process
+  PASS the desktop really holds one window per Run, all four at once
+  PASS each Run owns a distinct transcript bundle
+  PASS all four concurrent Runs finish completed
+  PASS every concurrent Run's transcript verifies and classifies SUCCEEDED
+  PASS completed windows stay open until closed by hand
+  PASS no window died when its Run finished
+OK   concurrent: 9/9 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\concurrent.json
+
+=== retention ===
+  PASS the shipped policy is seven days and two GiB
+  PASS a completed bundle past seven days is trashed
+  PASS a released-lease bundle past seven days is trashed
+  PASS a fresh completed bundle is kept
+  PASS an active (non-terminal) bundle is never cleaned
+  PASS a bundle whose owner is a live foreign process is never cleaned
+  PASS the trashed bundles are gone from the live root but retained under trash
+  PASS the quota path trashes the oldest terminal bundle
+  PASS the active bundle survives even a zero quota
+  PASS a trashed bundle past the grace window is physically purged
+  PASS an unusable root disables retention instead of throwing
+OK   retention: 11/11 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\retention.json
+
+=== window-retention ===
+  PASS the Run completes with its window open
+  PASS the window is still open after the Run finished
+  PASS the window released the bundle after replay
+  PASS a completed bundle is not pinned by its open window
+  PASS retention trashes the completed bundle while its window is open
+  PASS the trash rename succeeds with the window still on screen
+  PASS the bundle is really gone from the live root
+  PASS the window is still alive after its bundle was cleaned
+  PASS its last recorded verdict was still SUCCEEDED
+  PASS the live root holds no recreated empty bundle
+  PASS the cleaned window is still on screen and still labelled SUCCEEDED
+  PASS pi_status honestly reports the evidence is no longer available
+  PASS the Run's own outcome is still reported from the registry
+OK   window-retention: 13/13 checks — C:\Users\qnhxx\Documents\AI-Projects\Code\pi-subagent\.scratch\pi-subagent-slimming\qualify\_out\window-retention.json

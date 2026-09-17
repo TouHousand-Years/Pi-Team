@@ -1,0 +1,298 @@
+{
+  "scenario": "timeout",
+  "startedAt": "2026-09-17T03:50:53.515Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "the Run is reported as a timeout, not as success",
+      "ok": true,
+      "detail": {
+        "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+        "session": {
+          "name": "qualify-timeout",
+          "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\timeout-cwd",
+          "goal": "qualification: a truncated Run marks its evidence incomplete",
+          "status": "error",
+          "constraints": {
+            "noSkills": true
+          },
+          "progress": [],
+          "lastActive": 1789617064942,
+          "msgCount": 1,
+          "lastError": {
+            "code": "timeout",
+            "message": "run timed out",
+            "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+            "ts": 1789617064942
+          }
+        },
+        "status": "timeout",
+        "progress": [],
+        "progressTruncated": false,
+        "error": {
+          "code": "timeout",
+          "message": "run timed out",
+          "signal": "SIGTERM"
+        }
+      }
+    },
+    {
+      "name": "the timeout fired near its 10 s deadline, not after the Run's own 60 s",
+      "ok": true,
+      "detail": 11209
+    },
+    {
+      "name": "the Transcript terminal outcome is incomplete",
+      "ok": true,
+      "detail": {
+        "outcome": "incomplete",
+        "exitCode": null,
+        "signal": "SIGTERM",
+        "startedAt": 1789617053750,
+        "endedAt": 1789617064942,
+        "finalSeq": 49,
+        "stdoutBytes": 19309,
+        "stderrBytes": 0,
+        "sawEof": true,
+        "piSettlement": {
+          "agentEnd": false,
+          "agentSettled": false,
+          "lastStdoutType": "tool_execution_update"
+        },
+        "sha256": "acb6151e5e7f934ee02c1f582dec5f2d415f15888838ddbeac9ea62bb01475be"
+      }
+    },
+    {
+      "name": "pi_status marks the Transcript incomplete rather than available-and-clean",
+      "ok": true,
+      "detail": {
+        "available": true,
+        "outcome": "incomplete",
+        "integrity": "incomplete",
+        "startedAt": 1789617053750,
+        "endedAt": 1789617064942,
+        "piSettlement": {
+          "agentEnd": false,
+          "agentSettled": false,
+          "lastStdoutType": "tool_execution_update"
+        }
+      }
+    },
+    {
+      "name": "the live window ends up INCOMPLETE, not SUCCEEDED",
+      "ok": true,
+      "detail": {
+        "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+        "instanceId": "75b9e829-6c78-4bf9-aa16-b254f561171c",
+        "pid": 39168,
+        "startedAt": 1789617054097,
+        "updatedAt": 1789617065088,
+        "state": "ready",
+        "outcome": "incomplete",
+        "token": "INCOMPLETE",
+        "captureIncomplete": false,
+        "alertAttemptedAt": 1789617054097,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "name": "the live window made exactly one (warning) sound attempt, and recorded it",
+      "ok": true,
+      "detail": 1789617054097
+    },
+    {
+      "name": "the window is still alive and open after the Run died",
+      "ok": true,
+      "detail": {
+        "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+        "instanceId": "75b9e829-6c78-4bf9-aa16-b254f561171c",
+        "pid": 39168,
+        "startedAt": 1789617054097,
+        "updatedAt": 1789617065088,
+        "state": "ready",
+        "outcome": "incomplete",
+        "token": "INCOMPLETE",
+        "captureIncomplete": false,
+        "alertAttemptedAt": 1789617054097,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "name": "the shipped viewer shows INCOMPLETE and refuses a success sound",
+      "ok": true,
+      "detail": {
+        "mode": "replay",
+        "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+        "session": "qualify-timeout",
+        "header": [
+          "Run      bc5b1e27-acab-4019-900f-b0f9130ce012",
+          "Session  qualify-timeout    cwd C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\timeout-cwd    started 2026-09-17T03:50:53.7510000Z",
+          "Launch   sessionId=null  stdin=none  constraints=noSkills=true",
+          "Prompt   Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -Seconds 60; Write-Output LATE\". Then repl��"
+        ],
+        "terminal": true,
+        "outcome": "incomplete",
+        "token": "INCOMPLETE",
+        "integrityOk": true,
+        "integrityReasons": [],
+        "soundDecision": "warning",
+        "soundWouldAttempt": false,
+        "soundSuppressed": true,
+        "sourceReleased": true,
+        "sourceCleaned": false,
+        "records": 49,
+        "replayed": 49,
+        "tailed": 0,
+        "textLength": 3288,
+        "hashExpected": "acb6151e5e7f934ee02c1f582dec5f2d415f15888838ddbeac9ea62bb01475be",
+        "hashComputed": "acb6151e5e7f934ee02c1f582dec5f2d415f15888838ddbeac9ea62bb01475be",
+        "hashBytes": 34583,
+        "hashLines": 48,
+        "fontsResolved": false,
+        "errors": []
+      }
+    },
+    {
+      "name": "exactly one Run was started: nothing was auto-redispatched",
+      "ok": true,
+      "detail": [
+        "bc5b1e27-acab-4019-900f-b0f9130ce012"
+      ]
+    }
+  ],
+  "state": {
+    "RUN_ROOT": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z",
+    "registry": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\timeout\\registry.json",
+    "transcripts": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\timeout\\runs",
+    "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\timeout-cwd"
+  },
+  "run": {
+    "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+    "status": "timeout",
+    "error": {
+      "code": "timeout",
+      "message": "run timed out",
+      "signal": "SIGTERM"
+    },
+    "elapsedMs": 11209
+  },
+  "terminal": {
+    "outcome": "incomplete",
+    "exitCode": null,
+    "signal": "SIGTERM",
+    "startedAt": 1789617053750,
+    "endedAt": 1789617064942,
+    "finalSeq": 49,
+    "stdoutBytes": 19309,
+    "stderrBytes": 0,
+    "sawEof": true,
+    "piSettlement": {
+      "agentEnd": false,
+      "agentSettled": false,
+      "lastStdoutType": "tool_execution_update"
+    },
+    "sha256": "acb6151e5e7f934ee02c1f582dec5f2d415f15888838ddbeac9ea62bb01475be"
+  },
+  "timeoutShape": {
+    "sawEof": true,
+    "signal": "SIGTERM",
+    "captureError": null,
+    "capturedBytesBeforeKill": 19309
+  },
+  "status": {
+    "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+    "session": "qualify-timeout",
+    "status": "timeout",
+    "progress": [],
+    "error": {
+      "code": "timeout",
+      "message": "run timed out",
+      "signal": "SIGTERM"
+    },
+    "timing": {
+      "startedAt": 1789617053750,
+      "endedAt": 1789617064942
+    },
+    "transcript": {
+      "available": true,
+      "outcome": "incomplete",
+      "integrity": "incomplete",
+      "startedAt": 1789617053750,
+      "endedAt": 1789617064942,
+      "piSettlement": {
+        "agentEnd": false,
+        "agentSettled": false,
+        "lastStdoutType": "tool_execution_update"
+      }
+    },
+    "viewer": {
+      "available": true,
+      "state": "ready",
+      "pid": 39168,
+      "token": "RUNNING",
+      "captureIncomplete": false,
+      "sourceCleaned": false,
+      "alertAttemptedAt": null
+    }
+  },
+  "viewerState": {
+    "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+    "instanceId": "75b9e829-6c78-4bf9-aa16-b254f561171c",
+    "pid": 39168,
+    "startedAt": 1789617054097,
+    "updatedAt": 1789617065088,
+    "state": "ready",
+    "outcome": "incomplete",
+    "token": "INCOMPLETE",
+    "captureIncomplete": false,
+    "alertAttemptedAt": 1789617054097,
+    "sourceCleaned": false,
+    "lastError": ""
+  },
+  "replay": {
+    "status": 0,
+    "report": {
+      "mode": "replay",
+      "runId": "bc5b1e27-acab-4019-900f-b0f9130ce012",
+      "session": "qualify-timeout",
+      "header": [
+        "Run      bc5b1e27-acab-4019-900f-b0f9130ce012",
+        "Session  qualify-timeout    cwd C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\timeout-cwd    started 2026-09-17T03:50:53.7510000Z",
+        "Launch   sessionId=null  stdin=none  constraints=noSkills=true",
+        "Prompt   Use the bash tool to run exactly: powershell -NoProfile -Command \"Start-Sleep -Seconds 60; Write-Output LATE\". Then repl��"
+      ],
+      "terminal": true,
+      "outcome": "incomplete",
+      "token": "INCOMPLETE",
+      "integrityOk": true,
+      "integrityReasons": [],
+      "soundDecision": "warning",
+      "soundWouldAttempt": false,
+      "soundSuppressed": true,
+      "sourceReleased": true,
+      "sourceCleaned": false,
+      "records": 49,
+      "replayed": 49,
+      "tailed": 0,
+      "textLength": 3288,
+      "hashExpected": "acb6151e5e7f934ee02c1f582dec5f2d415f15888838ddbeac9ea62bb01475be",
+      "hashComputed": "acb6151e5e7f934ee02c1f582dec5f2d415f15888838ddbeac9ea62bb01475be",
+      "hashBytes": 34583,
+      "hashLines": 48,
+      "fontsResolved": false,
+      "errors": []
+    }
+  },
+  "endedAt": "2026-09-17T03:51:06.429Z",
+  "failed": [],
+  "ok": true
+}

@@ -1,0 +1,150 @@
+{
+  "scenario": "compat",
+  "startedAt": "2026-09-17T03:50:21.746Z",
+  "env": {
+    "repo": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent",
+    "server": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\pi-subagent\\dist\\server.js",
+    "serverSha256": "0277fd726f40f9a975b584e335a65d5c00c830fc87cdd7829613ab3154663eaf",
+    "piBin": "C:\\Users\\qnhxx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe C:\\Users\\qnhxx\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "checks": [
+    {
+      "name": "a Run still works while the legacy registry is loaded",
+      "ok": true,
+      "detail": {
+        "runId": "2ef4aac5-0543-43e8-aafc-428fcc3f8e25",
+        "session": {
+          "name": "qualify-compat",
+          "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\compat-cwd",
+          "goal": "qualification: prove the legacy registry is read and preserved",
+          "status": "idle",
+          "constraints": {
+            "noSkills": true
+          },
+          "progress": [
+            {
+              "ts": 1789617024901,
+              "tool": "bash",
+              "summary": "COMPAT_OK\n"
+            }
+          ],
+          "lastActive": 1789617024902,
+          "msgCount": 1,
+          "lastSummary": "COMPAT_REPLY"
+        },
+        "status": "completed",
+        "result": "COMPAT_REPLY",
+        "progress": [
+          {
+            "ts": 1789617024901,
+            "tool": "bash",
+            "summary": "COMPAT_OK\n"
+          }
+        ],
+        "progressTruncated": false,
+        "usage": {
+          "inputTokens": 86,
+          "outputTokens": 6,
+          "totalTokens": 1756,
+          "cost": 0.000048662
+        }
+      }
+    },
+    {
+      "name": "no legacy session was dropped by the rewrite",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "all 50 legacy session records survive field-for-field",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "no legacy record was silently marked running",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "the new session was appended in the same v1 shape",
+      "ok": true,
+      "detail": {
+        "name": "qualify-compat",
+        "piSessionId": "01a0ad7c-a521-7214-86fe-b4931aa86b33",
+        "cwd": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\compat-cwd",
+        "goal": "qualification: prove the legacy registry is read and preserved",
+        "status": "idle",
+        "constraints": {
+          "noSkills": true
+        },
+        "progress": [
+          {
+            "ts": 1789617024901,
+            "tool": "bash",
+            "summary": "COMPAT_OK\n"
+          }
+        ],
+        "lastActive": 1789617024902,
+        "msgCount": 1,
+        "lastSummary": "COMPAT_REPLY"
+      }
+    },
+    {
+      "name": "a legacy session continues with the piSessionId from the legacy file",
+      "ok": true,
+      "detail": {
+        "launch": {
+          "promptSubmitted": "Reply with exactly: LEGACY_CONTINUATION_OK",
+          "promptEffective": "Reply with exactly: LEGACY_CONTINUATION_OK",
+          "cwd": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\OpenMPT-for-AI",
+          "sessionId": "01a08042-da17-71f0-8956-72568c9ef7b6",
+          "constraints": {
+            "noSkills": true
+          },
+          "stdin": "none"
+        },
+        "expected": "01a08042-da17-71f0-8956-72568c9ef7b6"
+      }
+    }
+  ],
+  "registry": {
+    "path": "C:\\Users\\qnhxx\\AppData\\Local\\Temp\\pi-subagent-qualify\\2026-09-17T03-50-21-501Z\\compat\\registry.json",
+    "sessions": 50,
+    "bytes": 505717
+  },
+  "compatRun": {
+    "status": "completed",
+    "elapsedMs": 2954
+  },
+  "afterSessions": 51,
+  "drift": [],
+  "keyOrderNormalized": {
+    "count": 5,
+    "of": 50,
+    "sample": [
+      "reduce-mcp-core-explore",
+      "reduce-mcp-core-worker-dispatch",
+      "reduce-mcp-core-worker-docs"
+    ]
+  },
+  "legacyContinuation": {
+    "runId": "a4173cf7-80eb-4666-b905-645d11fa3a67",
+    "status": "running",
+    "expectedSessionId": "01a08042-da17-71f0-8956-72568c9ef7b6",
+    "launch": {
+      "promptSubmitted": "Reply with exactly: LEGACY_CONTINUATION_OK",
+      "promptEffective": "Reply with exactly: LEGACY_CONTINUATION_OK",
+      "cwd": "C:\\Users\\qnhxx\\Documents\\AI-Projects\\Code\\OpenMPT-for-AI",
+      "sessionId": "01a08042-da17-71f0-8956-72568c9ef7b6",
+      "constraints": {
+        "noSkills": true
+      },
+      "stdin": "none"
+    }
+  },
+  "endedAt": "2026-09-17T03:50:43.492Z",
+  "failed": [],
+  "ok": true
+}

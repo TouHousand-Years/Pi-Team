@@ -1,0 +1,85 @@
+== launch (process-boundary input recorded by the wrapper)
+   promptSubmitted: Use the bash tool to run exactly: powershell -NoProfile -Command "Start-Sleep -Seconds 120; Write-Output LATE". Then reply with exactly: NEVER
+   promptEffective: Use the bash tool to run exactly: powershell -NoProfile -Command "Start-Sleep -Seconds 120; Write-Output LATE". Then reply with exactly: NEVER
+   cwd: C:\Users\qnhxx\AppData\Local\Temp\pi-subagent-qualify\2026-09-17T03-58-35-623Z\visual-cwd
+   sessionId: null
+   constraints:
+     noSkills: true
+   stdin: none
+== state: starting
+== state: pi-spawned
+== session version=3 id=01a0ad84-4b67-70ce-b1f7-ee7298ffc77e
+   timestamp: 2026-09-17T03:58:43.559Z
+   cwd: C:\Users\qnhxx\AppData\Local\Temp\pi-subagent-qualify\2026-09-17T03-58-35-623Z\visual-cwd
+== state: pi-session-established (01a0ad84-4b67-70ce-b1f7-ee7298ffc77e)
+== agent_start
+== turn_start
+== message_start role=user
+   content:
+     type: text
+     text: Use the bash tool to run exactly: powershell -NoProfile -Command "Start-Sleep -Seconds 120; Write-Output LATE". Then reply with exactly: NEVER
+   timestamp: 1789617523598
+-- message_end role=user (content shown at message_start)
+== message_start role=assistant model=deepseek-v4-pro
+   api: openai-completions
+   provider: deepseek
+   usage:
+     input: 0
+     output: 0
+     cacheRead: 0
+     cacheWrite: 0
+     totalTokens: 0
+     cost:
+       input: 0
+       output: 0
+       cacheRead: 0
+       cacheWrite: 0
+       total: 0
+   stopReason: pending
+   timestamp: 1789617523610
+-- assistant content is rendered from its completion events below, not repeated here
+== thinking (streamed by Pi at the process boundary; not hidden reasoning)
+   text: The user wants me to run a bash command exactly as specified. Let me do that.
+== tool call bash id=call_00_0Ff992ha9sa1tKQtMWob1514
+   arguments:
+     command: powershell -NoProfile -Command "Start-Sleep -Seconds 120; Write-Output LATE"
+     timeout: 180
+   type: toolCall
+== message_end role=assistant stopReason=toolUse
+   rawStopReason: tool_calls
+   usage:
+     input: 142
+     output: 99
+     cacheRead: 1536
+     cacheWrite: 0
+     reasoning: 18
+     totalTokens: 1777
+     cost:
+       input: 0.00006177
+       output: 0.00008613
+       cacheRead: 0.000005568
+       cacheWrite: 0
+       total: 0.00015346800000000003
+   timestamp: 1789617523610
+   api: openai-completions
+   provider: deepseek
+   model: deepseek-v4-pro
+   responseId: 3afd5c11-9968-49ee-8072-85c87031c389
+-- assistant content of this message: 0 block(s), rendered above
+== tool_execution_start bash id=call_00_0Ff992ha9sa1tKQtMWob1514 (args shown at toolcall_end)
+== terminal outcome=incomplete exit=null signal=SIGTERM
+   startedAt: 1789617522070
+   endedAt: 1789617535362
+   finalSeq: 48
+   stdoutBytes: 17994
+   stderrBytes: 0
+   sawEof: true
+   sha256: d5f995627f030e499b7e7b74dbd300e747e9fa7d84dbe4fa22fe46673436b08c
+   piSettlement:
+     agentEnd: false
+     agentSettled: false
+     lastStdoutType: tool_execution_update
+-- no tool_execution_end was captured for id call_00_0Ff992ha9sa1tKQtMWob1514; intermediate output follows
+-- unmerged intermediate output [id call_00_0Ff992ha9sa1tKQtMWob1514 1/1] (not present in the final result)
+   partialResult:
+     content: []
