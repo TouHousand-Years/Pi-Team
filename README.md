@@ -10,7 +10,7 @@ Pi is a minimal terminal coding agent. Rather than teaching Pi *methodology*, th
 
 - **Process isolation** — each delegation spawns one `pi -p` child process. A Pi crash only affects that run.
 - **Fully session-based** — every task binds to a named session (e.g. `feat-auth`); subsequent calls auto-continue.
-- **Sync / async** — defaults to `async` (avoids host tool-call timeouts); harvest with `pi_status` long-poll.
+- **Sync / async** — `pi_delegate` defaults to `async` at the tool level; the skill layer drives `mode:"sync"` first and keeps async plus bounded long-poll collection as an explicit fallback.
 - **Universal MCP** — any standard MCP client can load it.
 
 ## Architecture
@@ -47,8 +47,19 @@ Three layers with clear boundaries: **Tool layer** (MCP schema + tool dispatch) 
 
 | Tool | Purpose |
 |------|---------|
-| `pi_delegate` | Dispatch a task (default async; new sessions wait for handshake) |
+| `pi_delegate` | Dispatch a task (tool default `async`; new sessions wait for handshake) |
 | `pi_status` | Harvest a run's result (long-poll) |
+
+### Skill layer
+
+`skills/pi-subagent/` is the strategy layer a host loads on top of those two tools. It states one delegation contract:
+
+- **Sync first** — a bounded objective is one `mode:"sync"` call with `runTimeoutMs` ≤ 240000, so the Run's terminal state returns inside the host's 300-second MCP call limit.
+- **Async is the explicit fallback** — used only for fan-out/background work or a verified over-cap objective, and it must state its reason.
+- **Monitor Wait collection** — an async Run is collected with non-overlapping `pi_status` waits: up to three at `waitTimeoutMs: 60000`, then waits at `waitTimeoutMs: 180000`.
+- **Never auto-redispatch** — a host-reported sync timeout does not stop the Run; the host collects the same `runId` and only re-dispatches by explicit decision.
+
+`test/skill-contract.test.ts` enforces this contract and checks that every installed specialized `pi-*` skill still names only these two tools.
 
 ### Session model
 
@@ -104,7 +115,7 @@ Optional env vars:
 ## Test
 
 ```bash
-npm test           # full suite (98 tests)
+npm test           # full suite
 npm run test:fast  # dot reporter
 ```
 
@@ -120,7 +131,7 @@ src/
 ├── registry/                # session.ts, run.ts, persist.ts, redact.ts
 ├── tools/                   # delegate, status
 └── server.ts                # MCP entry (stdio)
-skills/pi-subagent/          # SKILL.md + delegation-patterns (strategy layer)
+skills/pi-subagent/          # SKILL.md + references (sync-first strategy layer)
 test/                        # fixtures/ + *.test.ts
 docs/                        # design.md + implementation-plan.md (historical)
 ```
@@ -139,7 +150,7 @@ Key design decisions, all backed by real probing of `pi -p` output and external 
 
 ## Status
 
-Working implementation, 98 passing tests. Not yet published to npm — clone, `npm install && npm run build`, then point your MCP host at `dist/server.js`.
+Working implementation. Not yet published to npm — clone, `npm install && npm run build`, then point your MCP host at `dist/server.js`.
 
 ## License
 

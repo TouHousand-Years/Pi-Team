@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { REMOVED_TOOLS, SUPPORTED_TOOLS } from "./skill-surface.js";
 
 function fakePiEnv(mode: "success" | "hang" | "require_session" | "continuity"): Record<string, string> {
   return {
@@ -147,20 +148,7 @@ test("an async Run reaches timeout without a public kill tool", async () => {
 
 test("removed MCP tool names are rejected as unknown", async () => {
   await withServer("success", () => undefined, async (client) => {
-    const removed = [
-      "pi_plan",
-      "pi_session_list",
-      "pi_session_snapshot",
-      "pi_session_fork",
-      "pi_kill",
-      "pi_task_create",
-      "pi_task_plan",
-      "pi_task_stage_run",
-      "pi_task_stage_collect",
-      "pi_task_list",
-    ];
-
-    for (const name of removed) {
+    for (const name of REMOVED_TOOLS) {
       const result = await client.callTool({ name, arguments: {} });
       assert.equal(result.isError, true, `${name} should be rejected`);
       assert.deepEqual(toolJson(result), { error: "unknown tool" }, name);
@@ -190,6 +178,6 @@ test("the server leaves legacy tasks.json untouched and unused", async () => {
 test("the MCP surface contains exactly pi_delegate and pi_status", async () => {
   await withServer("success", () => undefined, async (client) => {
     const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
-    assert.deepEqual(names, ["pi_delegate", "pi_status"]);
+    assert.deepEqual(names, [...SUPPORTED_TOOLS].sort());
   });
 });
