@@ -7,6 +7,7 @@ import { extractResult } from "../runner/parse.js";
 import { Errors } from "../errors.js";
 import { ERROR_CODES, PI_BUILTIN_TOOLS, type Constraints, type Snapshot, type ProgressEvent } from "../types.js";
 import type { TranscriptStore } from "../transcript/store.js";
+import type { ViewerLauncher } from "../viewer/manager.js";
 import { observeSettlement, type TerminalInfo } from "../transcript/schema.js";
 
 const MAX_CONCURRENCY = 4;
@@ -41,6 +42,9 @@ export interface DelegateDeps {
   onSessionChange?: () => void;
   // Transcript 存储（可选）：存储故障被 writer 隔离，绝不影响 Run
   transcripts?: TranscriptStore;
+  // Run Window 启动器（可选）：每个 Run 自动开一个独立只读窗口；
+  // 启动失败/握手超时/平台不支持都绝不影响 Run
+  viewer?: ViewerLauncher;
 }
 
 export interface DelegateOutput {
@@ -110,7 +114,7 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
   const startedAt = Date.now();
   const cwd = existing?.cwd ?? input.cwd!;
 
-  // 建 run + transcript bundle（先落证据边界，再 spawn）+ spawn
+  // 建 run + transcript bundle（先落证据边界：launch 记录 + 起始状态记录，再开窗口，最后 spawn）
   const run = deps.runs.create({ session: input.session, startedAt });
   const writer = deps.transcripts?.begin({
     runId: run.runId,
@@ -121,12 +125,25 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
     constraints: { ...constraints },
     sessionId: existing?.piSessionId,
   });
+  writer?.state("starting");
+
+  // 每个 Run 一个独立只读 Run Window：首批证据已落盘后才启动，最有界 2s 等 ready 握手。
+  // 窗口失败（平台不支持/脚本缺失/启动报错/握手超时）都不阻断 Run，也不改写终态。
+  // 没有可用证据（存储禁用或 bundle 初始化失败）时不开窗口：窗口没有可展示的东西。
+  const bundleDir = writer && !writer.captureFailed ? deps.transcripts?.usableDir(run.runId) : undefined;
+  if (deps.viewer && bundleDir) {
+    try {
+      await deps.viewer.open({ runId: run.runId, bundleDir });
+    } catch { /* 隔离：查看器绝不影响执行 */ }
+  }
+
   const { child } = spawnDelegate({
     prompt: input.prompt,
     sessionId: existing?.piSessionId,
     constraints,
     cwd,
   });
+  writer?.state("pi-spawned");
 
   // 握手状态（提前声明，onLine 闭包引用）
   const state = {

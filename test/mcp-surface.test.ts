@@ -44,6 +44,10 @@ async function withServer(
       PI_SUBAGENT_REGISTRY: paths.registry,
       PI_SUBAGENT_TASKS: paths.tasks,
       FAKE_PI_MARKER: join(dir, "continuity.marker"),
+      // Real windows must never open during the test suite; the Run Window
+      // launch path has its own coverage in test/viewer.test.ts.
+      PI_SUBAGENT_VIEWER: "off",
+      PI_SUBAGENT_TRANSCRIPTS: join(dir, "runs"),
     },
     stderr: "pipe",
   });
@@ -172,6 +176,28 @@ test("the server leaves legacy tasks.json untouched and unused", async () => {
       [],
       "reading the invalid legacy file would create a corrupt backup",
     );
+  });
+});
+
+test("pi_status exposes capture integrity and accepts openWindow without a viewer", async () => {
+  await withServer("success", () => undefined, async (client, { cwd }) => {
+    const delegated = toolJson(await client.callTool({
+      name: "pi_delegate",
+      arguments: { prompt: "run", session: "window-opt", cwd, goal: "check the surface", mode: "sync" },
+    }));
+    assert.equal(delegated.status, "completed", JSON.stringify(delegated));
+    assert.ok(delegated.runId);
+
+    const harvested = toolJson(await client.callTool({
+      name: "pi_status",
+      arguments: { runId: delegated.runId, openWindow: true, waitTimeoutMs: 0 },
+    }));
+    assert.equal(harvested.status, "completed", JSON.stringify(harvested));
+    // The Transcript is the durable evidence for the window; with the window
+    // disabled there is simply no viewer field, and nothing throws.
+    assert.equal(harvested.transcript?.available, true);
+    assert.equal(harvested.viewer?.available, false);
+    assert.equal(typeof harvested.timing?.startedAt, "number");
   });
 });
 

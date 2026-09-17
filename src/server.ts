@@ -9,6 +9,7 @@ import { loadRegistry, saveRegistry } from "./registry/persist.js";
 import { delegate } from "./tools/delegate.js";
 import { status } from "./tools/status.js";
 import { TranscriptStore } from "./transcript/store.js";
+import { ViewerManager } from "./viewer/manager.js";
 import { CLEANUP_INTERVAL_MS } from "./transcript/schema.js";
 import { join } from "node:path";
 import { homedir } from "node:os";
@@ -22,6 +23,13 @@ const procs = new ProcessTable();
 
 // Transcript 存储：初始化失败被 store 内部隔离（disabled），绝不阻断 server 启动
 const transcripts = new TranscriptStore();
+
+// Run Window 启动器：非 Windows / 脚本缺失 / PI_SUBAGENT_VIEWER=off 时自我降级为 unavailable
+const viewer = new ViewerManager();
+if (!viewer.available) {
+  // 诊断信息走 stderr（不污染 stdout 的 JSON-RPC 通道）
+  process.stderr.write(`[pi-subagent] run window unavailable: ${viewer.unavailableReason()}\n`);
+}
 
 // 启动加载
 const loaded = loadRegistry(REGISTRY_PATH);
@@ -77,10 +85,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "pi_status",
-      description: "取 run 结果（long-poll）",
+      description: "取 run 结果（long-poll）；openWindow 可重开该 Run 的只读窗口",
       inputSchema: {
         type: "object",
-        properties: { runId: { type: "string" }, waitTimeoutMs: { type: "number" } },
+        properties: {
+          runId: { type: "string" },
+          waitTimeoutMs: { type: "number" },
+          openWindow: { type: "boolean" },
+        },
         required: ["runId"],
       },
     },
@@ -93,10 +105,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     let result: unknown;
     switch (req.params.name) {
       case "pi_delegate":
-        result = await delegate(args, { sessions, runs, procs, onSessionChange: persist, transcripts });
+        result = await delegate(args, { sessions, runs, procs, onSessionChange: persist, transcripts, viewer });
         break;
       case "pi_status":
-        result = await status(args, runs, transcripts);
+        result = await status(args, { runs, transcripts, viewer });
         break;
       default:
         return {

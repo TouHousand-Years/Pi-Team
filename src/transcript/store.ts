@@ -5,9 +5,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import {
   FILES, QUOTA_BYTES, RETENTION_MS, TRASH_GRACE_MS,
-  type TranscriptOutcome,
+  type PiSettlement, type TranscriptOutcome,
 } from "./schema.js";
-import { readLease, readManifest, replay } from "./reader.js";
+import { readLease, readManifest, readTerminalTail, replay } from "./reader.js";
 import { TranscriptWriter, type BeginInput } from "./writer.js";
 import { pidAlive, reconcileStale, type ReconcileResult } from "./recovery.js";
 
@@ -28,6 +28,10 @@ export interface TranscriptDescription {
   // integrity-ok: 终态正常且无捕获错误；capture-error: 有捕获/存储错误；
   // incomplete: 终态为 incomplete；unknown: 未经重放校验
   integrity: "integrity-ok" | "capture-error" | "incomplete" | "unknown";
+  // 终态证据（只读尾部，不重放全文件）——仅终态 bundle 才有
+  startedAt?: number;
+  endedAt?: number;
+  piSettlement?: PiSettlement;
 }
 
 export interface CleanupReport {
@@ -76,6 +80,12 @@ export class TranscriptStore {
     return join(this.root, runId);
   }
 
+  // 可以读写的 bundle 目录；存储被禁用（根不可用/是 reparse point）时没有可用证据。
+  // Run Window 与 pi_status 用它决定是否提供 / 描述该 Run 的证据面。
+  usableDir(runId: string): string | undefined {
+    return this.disabled ? undefined : this.dir(runId);
+  }
+
   // 永不 throw；存储不可用时返回 broken writer（不触碰 fs），调用方照常跑 Run
   begin(input: BeginInput): TranscriptWriter {
     if (this.disabled) return TranscriptWriter.brokenInstance(this.disabled);
@@ -92,10 +102,15 @@ export class TranscriptStore {
     const { manifest, reason } = readManifest(dir);
     if (!manifest) return { available: true, reason, integrity: "unknown" };
     if (!manifest.terminal) return { available: true, outcome: "running", integrity: "unknown" };
+    // 终态证据从文件尾部读取（不重放整个 transcript）
+    const terminal = readTerminalTail(dir);
+    const evidence = terminal
+      ? { startedAt: terminal.startedAt, endedAt: terminal.endedAt, piSettlement: terminal.piSettlement }
+      : {};
     if (manifest.terminal.outcome === "incomplete") {
       return {
         available: true, outcome: "incomplete",
-        captureError: manifest.terminal.captureError, integrity: "incomplete",
+        captureError: manifest.terminal.captureError, integrity: "incomplete", ...evidence,
       };
     }
     return {
@@ -103,6 +118,7 @@ export class TranscriptStore {
       outcome: manifest.terminal.outcome,
       captureError: manifest.terminal.captureError,
       integrity: manifest.terminal.captureError ? "capture-error" : "integrity-ok",
+      ...evidence,
     };
   }
 

@@ -3,7 +3,7 @@
 // hash 覆盖 terminal 记录之前的全部「以 \n 结尾的完整行」字节；未终止尾行不计入 hash，
 // 单独以 trailingPartial 报告（等待更多字节的语义；终态 bundle 上即截断证据）。
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { closeSync, existsSync, fstatSync, openSync, readFileSync, readSync } from "node:fs";
 import { join } from "node:path";
 import {
   FILES, TRANSCRIPT_SCHEMA_VERSION,
@@ -135,5 +135,36 @@ export function readLease(dir: string): import("./schema.js").TranscriptLease | 
     return JSON.parse(readFileSync(path, "utf8"));
   } catch {
     return undefined;
+  }
+}
+
+// 只读文件尾部取终态证据（pi_status 用：不重放整个 transcript）。
+// 尾部窗口的第一行可能是被切断的半行，解析失败即跳过——终态记录总是文件的最后一行。
+export function readTerminalTail(dir: string, maxBytes = 256 * 1024): TerminalInfo | undefined {
+  const path = join(dir, FILES.transcript);
+  if (!existsSync(path)) return undefined;
+  let fd: number | undefined;
+  try {
+    fd = openSync(path, "r");
+    const size = fstatSync(fd).size;
+    const start = size > maxBytes ? size - maxBytes : 0;
+    const buf = Buffer.alloc(Number(size - start));
+    if (buf.length > 0) readSync(fd, buf, 0, buf.length, start);
+    const lines = buf.toString("utf8").split("\n");
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i];
+      if (!line) continue;
+      try {
+        const rec = JSON.parse(line) as TranscriptRecord;
+        if (rec.v === TRANSCRIPT_SCHEMA_VERSION && rec.ch === "meta" && rec.kind === "terminal") {
+          return rec.terminal;
+        }
+      } catch { /* 半行或坏行：继续向前找 */ }
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  } finally {
+    if (fd !== undefined) { try { closeSync(fd); } catch { /* 已关闭 */ } }
   }
 }

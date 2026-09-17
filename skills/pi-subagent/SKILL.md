@@ -22,7 +22,7 @@ metadata:
 不要生成这些名字，也不要照着旧文档/旧案例里的 `pi_task_create`、`pi_task_stage_run` 调用——它们不存在。
 
 **`pi_delegate` 参数**：`prompt`（必填）、`session`（必填）、`cwd`、`goal`、`constraints`、`mode`（`"sync"` | `"async"`）、`runTimeoutMs`、`allowUnknownTools`。
-**`pi_status` 参数**：`runId`（必填）、`waitTimeoutMs`。
+**`pi_status` 参数**：`runId`（必填）、`waitTimeoutMs`、`openWindow`（可选，见「Run Window」）。
 
 首次派发一个 session 必须给 `cwd` + `goal`；之后同名 session 自动续接，只需给 `prompt`。
 
@@ -183,6 +183,10 @@ metadata:
 **Run 的证据：**
 - `pi_status` 返回**终态**时带 `transcript`（该 Run 完整过程记录的可用性/完整性摘要）；Run 仍在 `running` 的返回不带这个字段，存储不可用时也不带。
 - `pi_status` 只报告状态与结果，不是完成通知；完成由 host 在拿到终态后自行判断与转述。
+
+**Run Window（每个人自动获得的只读窗口）：**
+- 每次 `pi_delegate`（sync 或 async）都会自动开一个只读窗口，显示该 Run 的完整格式化过程（提示词、工具调用、thinking、stderr、终态）。这是给人看的证据面，不是 host 的工具。
+- host **不需要**为窗口做任何事：窗口失败、关闭、平台不支持都不影响 Run。`pi_status({runId, openWindow:true})` 只在该 Run 的窗口被关掉、或想重新调出时用；它绝不会重派工作。
 
 **工具名生成后自检（防串名事故）：**
 - 调用工具前，确认该工具名在 `pi_delegate` / `pi_status` 之内。

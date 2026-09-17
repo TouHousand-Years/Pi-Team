@@ -352,7 +352,7 @@ test("delegate 成功 → transcript 终态 succeeded、integrity-ok、字节保
     const r = await delegate({ prompt: "数一下到三", session: "s1", cwd: c.dir, goal: "g", mode: "sync" }, d);
     runId = r.runId;
     assert.equal(r.status, "completed");
-    const st = await status({ runId: r.runId }, d.runs, store);
+    const st = await status({ runId: r.runId }, { runs: d.runs, transcripts: store });
     assert.ok(st.transcript);
     assert.equal(st.transcript!.available, true);
     assert.equal(st.transcript!.outcome, "succeeded");
@@ -433,7 +433,7 @@ test("存储故障隔离：root 不可用 → delegate 照常成功，status 无
     const d = depsWith(store);
     const r = await delegate({ prompt: "p", session: "s1", cwd: c.dir, goal: "g", mode: "sync" }, d);
     assert.equal(r.status, "completed");  // Run 不受影响
-    const st = await status({ runId: r.runId }, d.runs, store);
+    const st = await status({ runId: r.runId }, { runs: d.runs, transcripts: store });
     assert.ok(st.transcript);
     assert.equal(st.transcript!.available, false);
   });
@@ -447,7 +447,7 @@ test("向后兼容：不接 transcript 存储的 delegate/status 行为不变", 
     const d = depsWith(undefined);
     const r = await delegate({ prompt: "p", session: "s1", cwd: c.dir, goal: "g", mode: "sync" }, d);
     assert.equal(r.status, "completed");
-    const st = await status({ runId: r.runId }, d.runs);
+    const st = await status({ runId: r.runId }, { runs: d.runs });
     assert.equal(st.transcript, undefined);
   });
   c.cleanup();

@@ -30,7 +30,7 @@ test("async 成功全流程：delegate → status 收割 completed", async () =>
   await withEnv(fakePiEnv("success"), async () => {
     const d = sys();
     const r1 = await delegate({ prompt: "do", session: "s1", cwd: c.dir, goal: "g", mode: "async" }, d);
-    const done = await status({ runId: r1.runId, waitTimeoutMs: 5000 }, d.runs);
+    const done = await status({ runId: r1.runId, waitTimeoutMs: 5000 }, { runs: d.runs });
     assert.equal(done?.status, "completed");
     assert.ok(done?.result);
     assert.ok((done?.progress?.length ?? 0) > 0);
@@ -43,7 +43,7 @@ test("sync 超时：hang → status timeout", async () => {
   await withEnv(fakePiEnv("hang"), async () => {
     const d = sys();
     const r1 = await delegate({ prompt: "do", session: "s1", cwd: c.dir, goal: "g", mode: "async", runTimeoutMs: 500 }, d);
-    const done = await status({ runId: r1.runId, waitTimeoutMs: 3000 }, d.runs);
+    const done = await status({ runId: r1.runId, waitTimeoutMs: 3000 }, { runs: d.runs });
     assert.equal(done?.status, "timeout");
     await drain(d);
   });
@@ -59,7 +59,7 @@ test("session_create_failed：no_session → error + registry 无记录", async 
     assert.equal(r1.error?.code, "session_create_failed");
     assert.equal(d.sessions.has("s1"), false);
     // 但 run 仍在 registry，可 status 查
-    const done = await status({ runId: r1.runId }, d.runs);
+    const done = await status({ runId: r1.runId }, { runs: d.runs });
     assert.equal(done?.status, "error");
     await drain(d);
   });
@@ -72,8 +72,8 @@ test("多等待者：两个 status 同时等同一 run 都拿到结果", async (
     const d = sys();
     const r1 = await delegate({ prompt: "do", session: "s1", cwd: c.dir, goal: "g", mode: "async" }, d);
     const [a, b] = await Promise.all([
-      status({ runId: r1.runId, waitTimeoutMs: 5000 }, d.runs),
-      status({ runId: r1.runId, waitTimeoutMs: 5000 }, d.runs),
+      status({ runId: r1.runId, waitTimeoutMs: 5000 }, { runs: d.runs }),
+      status({ runId: r1.runId, waitTimeoutMs: 5000 }, { runs: d.runs }),
     ]);
     assert.equal(a?.status, "completed");
     assert.equal(b?.status, "completed");
