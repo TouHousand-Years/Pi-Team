@@ -977,7 +977,7 @@ function Format-AssistantSubEvent {
     'thinking_delta' { Add-BlockFragment -State $State -Kind 'thinking' -ContentIndex $ci -Delta (Format-ScalarText -Value (Get-PropValue -Rec $ame -Name 'delta')) }
     'thinking_end' {
       $blk = Close-Block -State $State -Kind 'thinking' -ContentIndex $ci -Content (Get-PropValue -Rec $ame -Name 'content') -Source 'thinking_end'
-      Add-Line -State $State -Text '== thinking (streamed by Pi at the process boundary; not hidden reasoning)'
+      Add-Line -State $State -Text '== thinking'
       if (-not $blk.reconciled) {
         Add-Line -State $State -Text ('-- thinking_end carried no content; showing the withheld fragments unreconciled')
       }

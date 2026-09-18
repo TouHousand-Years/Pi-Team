@@ -229,7 +229,7 @@ test("viewer formatter: healthy Run renders each payload exactly once and verifi
   assert.doesNotMatch(text, /"type":"message_update"/);
   assert.doesNotMatch(text, /thinking_delta/);
   assert.match(text, /== assistant text\n\s+text: I will read the file\./);
-  assert.match(text, /== thinking \(streamed by Pi at the process boundary; not hidden reasoning\)\n\s+text: Let me think\. I should read it\./);
+  assert.match(text, /== thinking\n\s+text: Let me think\. I should read it\./);
 
   // Tool calls render once, from toolcall_end; tool_execution_start does not
   // repeat the arguments.
