@@ -1,5 +1,7 @@
 # Ticket 09 — human visual acceptance of the production Run Window
 
+**Accepted by the user on 2026-09-18:** “人工核验已通过”. The checklist and process information below are the historical 2026-09-17 inspection handoff; the old windows are not assumed to remain open.
+
 Generated 2026-09-17T03:59:02.186Z by `qualify/visual.mjs`.
 
 Three real Run Windows are open on this desktop, each produced by the real

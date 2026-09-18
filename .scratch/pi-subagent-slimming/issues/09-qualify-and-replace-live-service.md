@@ -1,12 +1,12 @@
 # Qualify and replace the live service
 
 Type: wayfinder:task
-Status: open
+Status: resolved
 Blocked by: 07, 08
 
-> Machine qualification, backup, cutover and a verified rollback are complete. The ticket
-> stays open for the one spec-listed gate that needs a human: visual acceptance of the
-> production Run Window (see "Still pending" below).
+> Machine qualification, backup, cutover and a verified rollback are complete.
+> On 2026-09-18 the user confirmed that production Run Window human acceptance passed.
+> The three follow-up audit defects are fixed and covered by regression tests.
 
 ## Question
 
@@ -14,7 +14,7 @@ With no active Run, qualify the complete change against build, targeted compatib
 
 ## Answer
 
-The change is qualified against every gate except the human visual one, and the live service is cut over to this repository's verified build with a demonstrated, byte-exact rollback. The whole qualification is a repeatable harness under `.scratch/pi-subagent-slimming/qualify/` (see its `README.md`): it drives the real compiled `dist/server.js` over a real stdio MCP client, the real Pi 0.85.1 CLI, and the real PowerShell Run Window. Nothing is mocked, and every verdict names the transcript bundle it came from.
+The change has passed machine qualification and user-confirmed production visual acceptance. The live service configuration points to this repository's build, with a previously demonstrated byte-exact rollback. The original qualification below was performed on 2026-09-17; the 2026-09-18 audit fixes and validation are recorded in `../audit-2026-09-18.md`. The original repeatable harness under `.scratch/pi-subagent-slimming/qualify/` drives the compiled server, real Pi 0.85.1 CLI, and real Run Window.
 
 ### Build, regression, targeted compatibility
 
@@ -60,7 +60,9 @@ The change is qualified against every gate except the human visual one, and the 
 
 Evidence: `qualify/_out/*.json` per scenario, `qualify/_out/full-run.txt`, `qualify/_out/npm-build.txt`, `qualify/_out/npm-test.txt`, `qualify/_out/cutover-verification.json`, and the three `verify-configured-service.*.json` snapshots.
 
-### Still pending: the human visual gate
+### Human visual gate — passed on 2026-09-18
+
+The user explicitly confirmed “人工核验已通过” on 2026-09-18. This closes the production visual gate. The following paragraphs preserve the original 2026-09-17 handoff; their window/process hold is historical and is not asserted to remain live.
 
 The global Codex agent instruction requires visual verification to pause for a human (the map carries the same rule), so this gate is deliberately left to a person. Three real Run Windows were left on the desktop for that purpose (a `SUCCEEDED` one carrying a multibyte glyph line, a `RUNNING` one streaming live, and an `INCOMPLETE` one), with `qualify/_out/visual-acceptance.md` naming exactly what to look at: glyph coverage for CJK/emoji/math/box-drawing/accents, complete titles, formatted-only display with no duplicate raw JSON, mid-stream continuity, distinct terminal presentation, read-only interactions — and, closing the last ticket-07 open item, whether the completion sound is actually **audible** (`alertAttemptedAt` proves the attempt is made once, never that it is heard). The rendered text each window should be showing is dumped beside the checklist for byte-level comparison. The machine-checked half of this scenario passed: all three windows opened, matched their Run ids, and produced the expected verdicts (`SUCCEEDED` integrity-ok, `RUNNING` with the expected `no-terminal-record`, `INCOMPLETE`).
 
@@ -76,6 +78,8 @@ Closing the hold closes the windows, since they are children of the MCP server.
 - Windows remain children of the MCP server, so closing the visual hold closes them; that limitation is unchanged from ticket 07.
 
 ## Comments
+
+- 2026-09-18: User confirmed production human acceptance. Fixed the audit's session reservation, forced-pipe EOF reporting, and running status Transcript omission; added regression coverage without changing the visual UI. Ticket resolved after automated validation.
 
 - **The harness had four bugs of its own before it qualified anything**, each caught because the assertion failed against reality rather than passing silently: a textual registry compare reported false drift; error codes are `invalid_arg`-style snake case, not hyphens; the non-overlap check measured the wrong interval; and the config parser broke on the `[mcp_servers.pi-subagent.env]` sub-table header, which hid `PI_BIN` and made the old service look like it could not spawn Pi at all. The `verify-configured-service` scenario is the one that mattered most — it turns "we cut over" into "the file, as read, launches this build and runs a Run".
 - **The `window-retention` scenario is deliberately retry-based.** A single-attempt assertion would be flaky by construction, because whether the rename lands during a viewer tick is a coin flip. Modelling retention's real cadence is both stable and more faithful than asserting one attempt.

@@ -1,0 +1,158 @@
+{
+  "checkedAt": "2026-09-18T07:25:33.642Z",
+  "source": "Direct Codex MCP tools after user restart",
+  "checks": {
+    "newSessionBusy": true,
+    "continuedSessionBusy": true,
+    "runningTranscriptPurePoll": true,
+    "runningTranscriptLongPoll": true,
+    "continuationContext": true,
+    "timeout": true,
+    "syncReuse": true
+  },
+  "runs": [
+    {
+      "runId": "37266cc2-6976-4cb6-8f4e-9d369f08c8c7",
+      "integrity": {
+        "ok": true,
+        "reasons": []
+      },
+      "terminal": {
+        "outcome": "succeeded",
+        "exitCode": 0,
+        "signal": null,
+        "startedAt": 1789716221152,
+        "endedAt": 1789716248937,
+        "finalSeq": 93,
+        "stdoutBytes": 42217,
+        "stderrBytes": 0,
+        "sawEof": true,
+        "piSettlement": {
+          "agentEnd": true,
+          "agentSettled": true,
+          "lastStdoutType": "agent_settled"
+        },
+        "sha256": "a72c8dcf44809516029e6004aeff76c5936fd21f3de35d31a35d0f81347e374f"
+      },
+      "viewer": {
+        "runId": "37266cc2-6976-4cb6-8f4e-9d369f08c8c7",
+        "instanceId": "dd981026-627d-468b-a0c5-4a6dc272e2bb",
+        "pid": 33960,
+        "startedAt": 1789716221531,
+        "updatedAt": 1789716249051,
+        "state": "ready",
+        "outcome": "succeeded",
+        "token": "SUCCEEDED",
+        "captureIncomplete": false,
+        "alertAttemptedAt": 1789716221531,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "runId": "f742b425-2197-4fd2-bb55-e499f3abda4c",
+      "integrity": {
+        "ok": true,
+        "reasons": []
+      },
+      "terminal": {
+        "outcome": "succeeded",
+        "exitCode": 0,
+        "signal": null,
+        "startedAt": 1789716258989,
+        "endedAt": 1789716283655,
+        "finalSeq": 64,
+        "stdoutBytes": 26476,
+        "stderrBytes": 0,
+        "sawEof": true,
+        "piSettlement": {
+          "agentEnd": true,
+          "agentSettled": true,
+          "lastStdoutType": "agent_settled"
+        },
+        "sha256": "627ce4c29f1d2881b65825f0efb4d58f233268273227616b6e8e568945fc3f4b"
+      },
+      "viewer": {
+        "runId": "f742b425-2197-4fd2-bb55-e499f3abda4c",
+        "instanceId": "b318f58c-517c-4368-9b01-b264dc508eb9",
+        "pid": 10092,
+        "startedAt": 1789716259323,
+        "updatedAt": 1789716283750,
+        "state": "ready",
+        "outcome": "succeeded",
+        "token": "SUCCEEDED",
+        "captureIncomplete": false,
+        "alertAttemptedAt": 1789716259323,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "runId": "5baa76ce-ff54-40fa-bea6-9682f929173f",
+      "integrity": {
+        "ok": true,
+        "reasons": []
+      },
+      "terminal": {
+        "outcome": "incomplete",
+        "exitCode": null,
+        "signal": "SIGTERM",
+        "startedAt": 1789716295063,
+        "endedAt": 1789716304287,
+        "finalSeq": 189,
+        "stdoutBytes": 82951,
+        "stderrBytes": 0,
+        "sawEof": true,
+        "piSettlement": {
+          "agentEnd": false,
+          "agentSettled": false,
+          "lastStdoutType": "message_update"
+        },
+        "sha256": "a835c2fc3424b20e0ad93fe15aad9e0467d1b7eae30ba3e236de9bc7f7414bc8"
+      },
+      "viewer": {
+        "runId": "5baa76ce-ff54-40fa-bea6-9682f929173f",
+        "instanceId": "27c92e96-1b7c-4041-966c-021c5db8aa34",
+        "pid": 26936,
+        "startedAt": 1789716295405,
+        "updatedAt": 1789716304374,
+        "state": "ready",
+        "outcome": "incomplete",
+        "token": "INCOMPLETE",
+        "captureIncomplete": false,
+        "alertAttemptedAt": 1789716295405,
+        "sourceCleaned": false,
+        "lastError": ""
+      }
+    },
+    {
+      "runId": "9551d3fb-21dc-421a-a386-9e19609f6738",
+      "integrity": {
+        "ok": true,
+        "reasons": []
+      },
+      "terminal": {
+        "outcome": "succeeded",
+        "exitCode": 0,
+        "signal": null,
+        "startedAt": 1789716330160,
+        "endedAt": 1789716332852,
+        "finalSeq": 20,
+        "stdoutBytes": 4484,
+        "stderrBytes": 0,
+        "sawEof": true,
+        "piSettlement": {
+          "agentEnd": true,
+          "agentSettled": true,
+          "lastStdoutType": "agent_settled"
+        },
+        "sha256": "b817fc8ca30b6b846aea95290b98b803c35f320d29c0ab021d430ab64bbe0107"
+      }
+    }
+  ],
+  "controlledProbe": {
+    "forcedPipeCloseSawEof": false,
+    "note": "Compiled module fault injection, not a naturally occurring live failure"
+  },
+  "manualAcceptance": "Pending user verification of window content, interaction and audible alerts"
+}

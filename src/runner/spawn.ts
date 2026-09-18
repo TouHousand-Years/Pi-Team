@@ -44,7 +44,7 @@ export interface CollectResult {
   exitCode: number | null;
   signal: NodeJS.Signals | null;
   spawnError?: Error;   // spawn 失败（如 PI_BIN 不存在）
-  sawEof: boolean;      // stdout 管道无流错误正常关闭（spawn 失败/流错误为 false）
+  sawEof: boolean;      // stdout/stderr 均正常读至 EOF；强制关闭或流错误为 false
 }
 
 export interface CollectOpts {
@@ -67,6 +67,10 @@ export function collectOutput(child: ChildProcess, opts: CollectOpts = {}): Prom
     let settled = false;
     let spawnError: Error | undefined;
     let streamError = false;
+    let stdoutEnded = child.stdout?.readableEnded ?? false;
+    let stderrEnded = child.stderr?.readableEnded ?? false;
+    child.stdout?.once("end", () => { stdoutEnded = true; });
+    child.stderr?.once("end", () => { stderrEnded = true; });
     const stdoutDecoder = new StringDecoder("utf8");
     const stderrDecoder = new StringDecoder("utf8");
 
@@ -116,7 +120,7 @@ export function collectOutput(child: ChildProcess, opts: CollectOpts = {}): Prom
         exitCode,
         signal,
         spawnError,
-        sawEof: !spawnError && !streamError,
+        sawEof: stdoutEnded && stderrEnded && !spawnError && !streamError,
       });
     };
 

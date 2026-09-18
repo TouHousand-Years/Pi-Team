@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-09-18T07:24:37.409Z",
+  "continuationConcurrency": {
+    "first": "running",
+    "sessionDuringRun": "running",
+    "second": "session_busy",
+    "running": 1,
+    "expected": "second rejected with session_busy"
+  },
+  "runningCaptureVisibility": {
+    "status": "running",
+    "hasTranscript": true,
+    "describeCalls": 1,
+    "expected": "capture failure visible during running"
+  },
+  "forcedPipeClose": {
+    "sawEof": false,
+    "expected": false
+  }
+}

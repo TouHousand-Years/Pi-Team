@@ -81,13 +81,15 @@ export async function status(input: StatusInput, deps: StatusDeps): Promise<Stat
     return {
       runId: input.runId, session: existing.session, status: "running",
       timing: timingOf(existing), viewer: viewerState,
+      transcript: transcripts?.describe(input.runId),
     };
   }
   const run = await runs.waitForCompletion(input.runId, waitMs);
   if (!run) {
     return {
       runId: input.runId, session: existing.session, status: "running",
-      timing: timingOf(existing), viewer: viewerState,
+      timing: timingOf(existing), viewer: describeViewer(),
+      transcript: transcripts?.describe(input.runId),
     };
   }
   return {

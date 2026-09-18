@@ -91,6 +91,9 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
 
   const existing = deps.sessions.get(input.session);
   const isCreate = !existing;
+  // Run is reserved before any await, including the viewer/first-session handshake.
+  const active = deps.runs.list().find((r) => r.session === input.session && r.status === "running");
+  if (active) throw Errors.sessionBusy(input.session, active.runId);
 
   // 校验
   if (isCreate) {
@@ -116,6 +119,11 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
 
   // 建 run + transcript bundle（先落证据边界：launch 记录 + 起始状态记录，再开窗口，最后 spawn）
   const run = deps.runs.create({ session: input.session, startedAt });
+  if (existing) {
+    deps.sessions.setRunning(input.session, run.runId);
+    deps.sessions.incMsgCount(input.session, startedAt);
+    deps.onSessionChange?.();
+  }
   const writer = deps.transcripts?.begin({
     runId: run.runId,
     session: input.session,
@@ -259,7 +267,7 @@ export async function delegate(input: DelegateInput, deps: DelegateDeps): Promis
     if (!res.sawEof) {
       writer?.captureError(res.spawnError
         ? `spawn failed, nothing captured: ${res.spawnError.message}`
-        : "stdio stream error before EOF; captured output may be truncated");
+        : "stdio did not reach clean EOF; captured output may be truncated");
     }
     const outcome = transcriptOutcome(status, !!res.spawnError, error);
     writer?.finalize({
