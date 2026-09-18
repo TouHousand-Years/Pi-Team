@@ -1,210 +1,182 @@
-# pi-subagent
+# Pi-Team
 
-> Turn the [Pi CLI](https://pi.dev) (`@earendil-works/pi-coding-agent`) into a **programmable coding sub-agent** that any MCP host (ZCode, Claude Code, Cursor, …) can delegate tasks to and track runs.
+Pi-Team turns the [Pi CLI](https://pi.dev) into a coding worker that an MCP host can delegate work to and collect results from. It wraps `pi -p --mode json`, with named sessions, sync/async execution, persistent transcripts, and a read-only window for each Run on Windows.
 
-`pi-subagent` is a thin MCP server that wraps `pi -p --mode json` into two structured tools: `pi_delegate` to dispatch a task and `pi_status` to harvest its result. Process-isolated, fully session-based, sync/async dual-mode.
+Derived from **[guyiicn/pi-subagent](https://github.com/guyiicn/pi-subagent)**. Thanks to the original author for the foundation. This version exposes two MCP tools and adds per-Run transcript capture and viewing. The repository is named **Pi-Team**; the package, MCP server identity, skill directory and `PI_SUBAGENT_*` settings retain their `pi-subagent` names for compatibility.
 
-## Why
+## Current features
 
-Pi is a minimal terminal coding agent. Rather than teaching Pi *methodology*, this project treats Pi as a **delegatable worker**: a host agent (ZCode / Claude Code) decides *when* to delegate, fires off a self-contained task, and harvests the result. One Pi process = one isolated sub-agent run.
+- **Two MCP tools:** `pi_delegate` starts work; `pi_status` waits for results and can reopen a Run's window.
+- **Named sessions:** the first call creates a Pi session; later calls with the same name continue it in the same working directory.
+- **Sync and async:** the API defaults to async. The bundled skill recommends sync for bounded work, with async for background work or parallel delegation.
+- **Process isolation:** one Pi process per Run, up to four active Runs per server, and one active Run per session.
+- **Execution controls:** choose a model, thinking level and tools, or disable Pi skills and context files through `constraints`.
+- **Timeouts:** a 10-minute default Run deadline and stall detection after 5 minutes without recorded tool-result progress. Long thinking periods can trigger the stall limit.
+- **Durable transcripts:** capture prompts, launch metadata, stdout/stderr bytes, lifecycle events and terminal integrity information, with recovery after interrupted capture.
+- **Windows viewer:** a read-only Run Window with replay, live updates, search, copy and line wrapping.
 
-- **Process isolation** — each delegation spawns one `pi -p` child process. A Pi crash only affects that run.
-- **Fully session-based** — every task binds to a named session (e.g. `feat-auth`); subsequent calls auto-continue.
-- **Sync / async** — `pi_delegate` defaults to `async` at the tool level; the skill layer drives `mode:"sync"` first and keeps async plus bounded long-poll collection as an explicit fallback.
-- **One Run Window per Run** — an independent read-only window replays and tails each Run's Transcript (Windows).
-- **Universal MCP** — any standard MCP client can load it.
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  MCP Host (ZCode / Claude Code / Pi / Cursor …)              │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ MCP (JSON-RPC over stdio)
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  pi-subagent-server  (Node/TS)                                │
-│  ┌────────────┐  ┌──────────────┐  ┌────────────────────┐   │
-│  │ Tool layer │  │ Session      │  │ Pi runner          │   │
-│  │ (2 tools)  │─▶│ registry     │─▶│ (spawn pi -p)      │   │
-│  │            │  │ + persist    │  │ parse agent_end    │   │
-│  └─────┬──────┘  │ + _snapshot  │  │ + tool_execution   │   │
-│        │         └──────────────┘  └─────────┬──────────┘   │
-│        │                           ┌────────▼─────────┐     │
-│        └───────────────────────────│ Run registry     │     │
-│                                    │ + process-table  │     │
-│                                   └──────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
-                            │ child_process.spawn({ cwd })
-                            ▼
-                   ┌─────────────────────┐
-                   │  pi CLI (0.77+)     │
-                   └─────────────────────┘
-```
-
-Three layers with clear boundaries: **Tool layer** (MCP schema + tool dispatch) / **Session registry** (state + persistence + redaction) / **Runner** (spawn pi, parse NDJSON, process table).
-
-## Tools
-
-| Tool | Purpose |
-|------|---------|
-| `pi_delegate` | Dispatch a task (tool default `async`; new sessions wait for handshake) |
-| `pi_status` | Harvest a run's result (long-poll); `openWindow` reopens that Run's window |
-
-### Skill layer
-
-`skills/pi-subagent/` is the strategy layer a host loads on top of those two tools. It states one delegation contract:
-
-- **Sync first** — a bounded objective is one `mode:"sync"` call with `runTimeoutMs` ≤ 240000, so the Run's terminal state returns inside the host's 300-second MCP call limit.
-- **Async is the explicit fallback** — used only for fan-out/background work or a verified over-cap objective, and it must state its reason.
-- **Monitor Wait collection** — an async Run is collected with non-overlapping `pi_status` waits: up to three at `waitTimeoutMs: 60000`, then waits at `waitTimeoutMs: 180000`.
-- **Never auto-redispatch** — a host-reported sync timeout does not stop the Run; the host collects the same `runId` and only re-dispatches by explicit decision.
-
-`test/skill-contract.test.ts` enforces this contract and checks that every installed specialized `pi-*` skill still names only these two tools.
-
-### Session model
-
-- Each session has a human-readable name + Pi's UUID + `cwd` + `goal`.
-- First `pi_delegate` creates the session (`goal` required); later calls auto-continue.
-- The registry persists to `~/.pi-subagent/registry.json` (atomic write; on restart, interrupted `running` records are corrected to `error`).
-- Concurrency cap: **4** running runs; a single session is never run concurrently.
+The public API does not expose the original planning, session-management, kill or task/stage orchestration tools. Internal helpers and historical designs remain in the tree; [`src/server.ts`](src/server.ts) defines the current MCP surface.
 
 ## Install
 
-```bash
-git clone <this-repo> && cd pi-subagent
-npm install
-npm run build      # required: emits dist/, the MCP entry point
+Install Node.js and npm, then install and configure Pi with access to your chosen model provider:
+
+```sh
+npm install -g @earendil-works/pi-coding-agent
+git clone https://github.com/TouHousand-Years/Pi-Team.git
+cd Pi-Team
+npm ci
+npm run build
 ```
 
-Prerequisite: the `pi` CLI is installed (`npm i -g @earendil-works/pi-coding-agent`) and on `PATH`.
-
-> **npm 10+ blocks install scripts by default.** If `npm install` prints
-> `1 package has install scripts not yet covered by allowScripts` for `esbuild`, run
-> `npm install-scripts approve esbuild` — `tsx` (used by the test suite) needs esbuild's
-> native binary and will fail to start without it.
+The `pi` executable must be on the MCP server's `PATH`. Rebuild after pulling changes: `dist/` is not committed. This project is installed from source and is not published to npm.
 
 ## Configure an MCP host
 
-Add to your MCP client config:
+Add this server to a host supporting MCP over stdio, replacing the example with your checkout's absolute path:
 
 ```json
 {
   "mcpServers": {
     "pi-subagent": {
       "command": "node",
-      "args": ["/abs/path/to/pi-subagent/dist/server.js"]
+      "args": ["/absolute/path/to/Pi-Team/dist/server.js"]
     }
   }
 }
 ```
 
-> **Use the compiled `dist/` entry with plain `node`, and always an absolute path.**
-> Do *not* configure `npx tsx src/server.ts`: MCP hosts spawn the server with the *host's*
-> working directory (the project being edited), not this repo. From there `npx` cannot resolve
-> the locally installed `tsx`, so it falls through to a registry download — on a slow or
-> firewalled network that blows past the host's 30s handshake window and the server shows up as
-> `CONNECT_TIMEOUT`. Running `dist/server.js` under `node` needs no resolution step and starts in
-> ~0.2s from any cwd.
->
-> Re-run `npm run build` after pulling changes, since `dist/` is gitignored.
+On Windows, use a JSON path such as `C:/Projects/Pi-Team/dist/server.js`. Use the compiled entry with `node`: a host may start the server from another working directory, where `npx tsx src/server.ts` cannot resolve this project's source and dependencies.
 
-Optional env vars:
-- `PI_SUBAGENT_REGISTRY` — registry path (default `~/.pi-subagent/registry.json`)
-- `PI_SUBAGENT_TRANSCRIPTS` — Run Transcript root (default `~/.pi-subagent/runs`)
-- `PI_SUBAGENT_VIEWER` — set to `off` to disable Run Windows entirely
-- `PI_SUBAGENT_POWERSHELL` — PowerShell hosting the window (default `powershell.exe`)
-- `PI_SUBAGENT_VIEWER_SCRIPT` — viewer script to launch (default `viewer/run-window.ps1`; the test suite points this at a stand-in)
-- `PI_BIN` — override the pi executable (used by tests)
+## Tools
 
-## Run Windows
+### pi_delegate
 
-Every `pi_delegate` — sync or async — opens one **independent read-only window for that Run**
-(`viewer/run-window.ps1`, launched by Node in STA mode). Each window replays the Run's Transcript and
-then tails it, showing the complete formatted event stream: submitted/effective prompts, launch
-metadata, lifecycle boundaries, complete assistant/thinking/tool events, final tool results plus any
-intermediate output the final result did not cover, stderr diagnostics, per-message usage, and the
-terminal record.
+| Parameter | Behavior |
+| --- | --- |
+| `prompt` | Required, nonempty task instructions. |
+| `session` | Required name; reuse it to continue the Pi session. |
+| `cwd` | Required for a new session and must exist. On continuation, an explicit value must match the original. |
+| `goal` | Required for a new session. |
+| `mode` | `async` (API default) or `sync`. |
+| `runTimeoutMs` | Run deadline in milliseconds; default `600000`. |
+| `constraints` | Optional per-call Pi configuration. Continuations do not automatically reuse prior constraints. |
+| `allowUnknownTools` | Allows names beyond the wrapper's known tools: `read`, `bash`, `edit`, `write`. |
 
-- **Lossless display.** Streaming fragments are withheld while the Run is healthy and reconciled into
-  their complete event, so content is never duplicated. Unknown, malformed, foreign-version and
-  unmatched content stays visible through explicit fallbacks instead of being dropped or repaired.
-  Nothing is summarised or truncated, and there is no raw-events tab.
-- **Evidence integrity.** Every transcript line read before the terminal record is hashed and compared
-  with the terminal record's `sha256`. Sequence gaps, a trailing partial line, capture errors and
-  schema-version mismatches mark the window `INCOMPLETE` instead of claiming success.
-- **Completion.** A clean success shows `SUCCEEDED` with one system sound; every failure, protocol
-  error or integrity downgrade shows `INCOMPLETE` with one warning sound. The attempt is recorded once
-  per Run in `viewer-state.json`, so reopening never replays it. There is no OS toast.
-- **Read-only.** Scrolling, selection, copy, select-all, find and a line-wrap toggle. A window can
-  never send input, retry, cancel or mutate a Run.
-- **Detached from capture.** Closing a window never affects capture or the Run. Completed windows stay
-  open until closed by hand, and an open window does not pin its bundle: after replaying a completed
-  Run it releases the files, so retention may clean the bundle while the window keeps its in-memory
-  content and marks that the source was cleaned.
-- **Reopen** with `pi_status` `{ runId, openWindow: true }` — a live window is raised, otherwise a new
-  one is created once the previous instance is confirmed gone. Reopening never redispatches work or
-  replays sound.
+`constraints` accepts `tools` and `excludeTools` arrays, `model`, `thinking` (`off`, `minimal`, `low`, `medium`, `high`, `xhigh`), `noSkills` and `noContextFiles`. These map to Pi CLI flags. The child process shares the user's filesystem permissions; process isolation is not a filesystem sandbox.
 
-Requirements and limits: the window itself is **Windows-only** (capture, Transcript, `pi_status` and
-retention stay cross-platform; elsewhere `pi_status` simply reports `viewer: unavailable`). The window
-is a child of the MCP server, so it lives as long as the server does. Any GUI failure — unsupported
-platform, missing script, launch error, handshake timeout — is isolated and never blocks a Run.
+Example of a bounded synchronous call:
 
-Standalone verification (no Run needed):
-
-```bash
-# Unicode/RTF/font path plus formatter-honesty self test (~1.5s)
-powershell -NoProfile -STA -ExecutionPolicy Bypass -File viewer/run-window.ps1 -SelfTest
-
-# Render one transcript bundle to text and print a JSON report
-powershell -NoProfile -STA -ExecutionPolicy Bypass -File viewer/run-window.ps1 `
-  -Replay -BundleDir ~/.pi-subagent/runs/<runId> -OutPath run.txt
+```json
+{
+  "prompt": "Read the source and write findings to review.md. Do not modify product code.",
+  "session": "review-parser",
+  "cwd": "C:/Projects/example",
+  "goal": "Review the parser for correctness",
+  "mode": "sync",
+  "runTimeoutMs": 240000,
+  "constraints": { "thinking": "high" }
+}
 ```
 
-## Test
+After it finishes, continue the same session:
 
-```bash
-npm test           # full suite
-npm run test:fast  # dot reporter
+```json
+{
+  "prompt": "Recheck the first finding against existing tests and update review.md.",
+  "session": "review-parser",
+  "mode": "sync",
+  "runTimeoutMs": 240000
+}
 ```
 
-Tests use a fake pi (`test/fixtures/fake-pi.sh`) and cover: async/sync, timeout, session-create-failure, multi-waiter, progress cap, registry persistence, redaction, Transcript schema/fidelity/recovery/retention, Run Window launch/handshake/reopen/containment, and the viewer formatter matrix (driven against real PowerShell on Windows).
+For background work, set `mode` to `async` and save the returned `runId`. New sessions wait for Pi's session handshake before returning; its timeout is 10 seconds. Sync waits for the Run's terminal result.
 
-## Project layout
+### pi_status
 
-```
-src/
-├── types.ts                 # all shared types + error codes
-├── errors.ts                # ToolError helpers
-├── runner/                  # parse.ts, argv.ts, spawn.ts, process-table.ts
-├── registry/                # session.ts, run.ts, persist.ts, redact.ts
-├── transcript/              # schema.ts, writer.ts, reader.ts, recovery.ts, store.ts
-├── viewer/                  # manager.ts (launch/reopen), state.ts (viewer seam files)
-├── tools/                   # delegate, status
-└── server.ts                # MCP entry (stdio)
-viewer/run-window.ps1        # the Run Window (separately shipped, Windows-only)
-skills/pi-subagent/          # SKILL.md + references (sync-first strategy layer)
-test/                        # fixtures/ + *.test.ts
-docs/                        # design.md + implementation-plan.md (historical)
+```json
+{
+  "runId": "<runId returned by pi_delegate>",
+  "waitTimeoutMs": 60000,
+  "openWindow": false
+}
 ```
 
-## Design & process
+`runId` is required. `waitTimeoutMs` defaults to `25000`; terminal Runs return immediately, and `0` returns a snapshot without waiting. `openWindow: true` raises or reopens the Windows viewer without dispatching another Run.
 
-This project went through collaborative design + 4 rounds of external review before implementation. The spec and plan are committed under `docs/`:
+Responses include `status` and, when available, `result`, `progress`, `usage`, `error`, `timing`, `transcript` and `viewer`. Run states are `running`, `completed`, `error`, `killed` and `timeout`. A wait returning `running` has only ended the wait; the Run continues.
 
-- **[`docs/design.md`](docs/design.md)** — superseded historical design retained for context; it is not the current API contract.
-- **[`docs/implementation-plan.md`](docs/implementation-plan.md)** — superseded historical implementation plan retained for context.
+Common errors include `goal_required`, `cwd_invalid`, `cwd_mismatch`, `session_busy`, `resource_busy`, `not_found` and `run_expired`. Inspect errors before deciding whether to retry.
 
-Key design decisions, all backed by real probing of `pi -p` output and external review:
-- **`cwd` ≠ session storage** — `spawn({ cwd })` controls the working dir; Pi's session files use their default location (doesn't pollute the project).
-- **async default + handshake** — new sessions wait for Pi's `session` event before returning (with a `sessionStartTimeoutMs`), so the host always gets a real `piSessionId`.
-- **Progress redaction** — tool results are truncated + scrubbed for tokens/keys before being stored.
+## Host skill
 
-## Status
+Load [`skills/pi-subagent/`](skills/pi-subagent/) through your host's skill mechanism to use the bundled delegation strategy:
 
-Working implementation. Not yet published to npm — clone, `npm install && npm run build`, then point your MCP host at `dist/server.js`.
+- Start bounded work with `mode: "sync"` and `runTimeoutMs` at most `240000`.
+- Use async explicitly for parallel/background work or work exceeding the sync budget.
+- Collect async Runs with non-overlapping Monitor Waits: at most three `60000` ms waits, followed by `180000` ms waits.
+- A disconnected sync call does not imply the Run stopped. Collect the same `runId` when available; never automatically redispatch the task.
 
-## License
+This schedule assumes a 300-second host tool-call limit. Configure the host accordingly or keep calls below its actual limit. The repository includes the base `pi-subagent` skill; specialized skills mentioned in it are separate installations.
 
-MIT
+## Storage and retention
+
+Session metadata persists atomically to `~/.pi-subagent/registry.json`. After restart, sessions left marked running become errors; later delegations can continue their Pi sessions. Pi stores its own session files independently of the task's `cwd`.
+
+Run lookup is in memory, retaining at most 128 completed Runs. Restarting the server does not restore old `runId` values for `pi_status`, even if their transcript bundles remain on disk.
+
+Each captured Run has a bundle under `~/.pi-subagent/runs/<runId>/`, including `manifest.json` and `transcript.jsonl`. Records carry sequence numbers, timestamps and byte-preserving payloads; the terminal record includes a SHA-256 digest. Transcripts retain full captured content, including prompts and tool output, rather than redacted progress summaries.
+
+Retention cleans inactive terminal bundles after 7 days, then removes the oldest eligible bundles to target a 2 GiB quota. Cleanup runs on startup, every 15 minutes, and after finalization. Active captures are protected. A trash grace period means the quota is not an immediate hard disk limit.
+
+## Windows Run Windows
+
+When enabled on Windows, each delegation opens `viewer/run-window.ps1` in PowerShell STA mode. It replays the transcript and follows new events: prompts, assistant/thinking text, tool calls and results, diagnostics, usage and terminal state.
+
+- Streaming fragments are reconciled with complete events; unknown or malformed content remains visible through fallbacks.
+- Hash mismatches, sequence gaps, partial records and capture errors produce `INCOMPLETE` instead of claiming a clean capture.
+- Clean success displays `SUCCEEDED`; other outcomes or integrity failures display `INCOMPLETE`. Completion sound attempts are recorded per Run so reopening does not replay them.
+- Closing the read-only window does not cancel the Run or stop capture. `pi_status` can reopen it while the Run remains available.
+- Completed windows release bundle files after replay, allowing retention to clean the source while keeping displayed content in memory.
+
+The viewer requires Windows, PowerShell and the shipped script. Capture and status collection do not require a GUI. Unsupported platforms, disabled viewers and viewer launch failures do not stop delegation. Viewer processes are tied to the MCP server's lifetime.
+
+## Environment variables
+
+| Variable | Purpose / default |
+| --- | --- |
+| `PI_SUBAGENT_REGISTRY` | Session registry; `~/.pi-subagent/registry.json`. |
+| `PI_SUBAGENT_TRANSCRIPTS` | Transcript root; `~/.pi-subagent/runs`. |
+| `PI_SUBAGENT_VIEWER` | Set to `off` to disable Run Windows. |
+| `PI_SUBAGENT_POWERSHELL` | Viewer PowerShell executable; `powershell.exe`. |
+| `PI_SUBAGENT_VIEWER_SCRIPT` | Override the shipped `viewer/run-window.ps1`. |
+| `PI_BIN` | Override the Pi executable, for tests or custom installations. |
+
+## Development
+
+```sh
+npm run build
+npm test
+npm run test:fast
+```
+
+Tests use a fake Pi process instead of paid model calls. They cover the MCP surface, sessions, execution modes, deadlines, stalls, persistence, transcripts, recovery, retention, viewer lifecycle and formatting. Bash is needed for the fake-Pi fixture; some tests assume Git for Windows at `C:/Program Files/Git`. Viewer formatting tests use real PowerShell on Windows with headless replay/self-test modes. Specialized skills are checked when discovered in the test's configured skill roots.
+
+```text
+src/server.ts              MCP stdio entry and two-tool schema
+src/tools/                 Delegation, status and retained prompt helpers
+src/runner/                Arguments, process launch, parsing and validation
+src/registry/              Sessions, Runs and persistence
+src/transcript/            Capture, integrity, recovery and retention
+src/viewer/                Viewer launch, reopen and state
+viewer/run-window.ps1      Windows transcript viewer
+skills/pi-subagent/        Bundled delegation skill and references
+test/                     Automated tests and fixtures
+docs/                     Historical design and implementation documents
+```
+
+[`docs/design.md`](docs/design.md), [`docs/implementation-plan.md`](docs/implementation-plan.md) and [`REVIEW.md`](REVIEW.md) are historical context, not the current API contract.
+
+## License and attribution
+
+[MIT](LICENSE). Original project: [guyiicn/pi-subagent](https://github.com/guyiicn/pi-subagent). The original copyright notice is preserved in `LICENSE`.
