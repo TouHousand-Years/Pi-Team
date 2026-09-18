@@ -151,6 +151,13 @@ function replay(bundleDir: string, opts: { timeoutMs?: number } = {}): ReplayRes
   return { report: JSON.parse(jsonLine) as ReplayReport, text: readFileSync(out, "utf8"), status: res.status ?? 0 };
 }
 
+function assertOnlyInitialInput(text: string): void {
+  assert.equal(
+    text.replace(/\r\n/g, "\n").trimEnd(),
+    "== initial input\n   text: Fix the parser.\n   text: second line of the submitted prompt",
+  );
+}
+
 // A representative healthy Pi 0.85.1 lifecycle, using the exact wire shapes
 // recorded in the Pi event-surface research.
 function happyEntries(): Entry[] {
@@ -200,7 +207,7 @@ function happyEntries(): Entry[] {
   return entries;
 }
 
-test("viewer formatter: healthy Run renders each payload exactly once and verifies the terminal hash", { skip: SKIP }, () => {
+test("viewer formatter: healthy Run shows only initial input, thinking, assistant text, and tool calls", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-happy");
   writeBundle(dir, "run-happy", happyEntries());
   const { report, text } = replay(dir);
@@ -216,12 +223,7 @@ test("viewer formatter: healthy Run renders each payload exactly once and verifi
   assert.deepEqual(report.errors, []);
   assert.equal(report.session, "sess-name");
 
-  // Submitted and effective prompts, and launch metadata, are evidence.
-  assert.match(text, /promptSubmitted:\n\s+Fix the parser\./);
-  assert.match(text, /promptEffective: Fix the parser\./);
-  assert.match(text, /cwd: C:\/work/);
-  assert.match(text, /thinking: medium/);
-  assert.match(text, /== state: pi-session-established \(sess-1\)/);
+  assert.match(text, /== initial input\n\s+text: Fix the parser\.\n\s+text: second line of the submitted prompt/);
 
   // Streaming fragments are withheld while healthy, then reconciled into the
   // complete event - and never appear as a second raw JSON copy.
@@ -231,30 +233,19 @@ test("viewer formatter: healthy Run renders each payload exactly once and verifi
   assert.match(text, /== assistant text\n\s+text: I will read the file\./);
   assert.match(text, /== thinking\n\s+text: Let me think\. I should read it\./);
 
-  // Tool calls render once, from toolcall_end; tool_execution_start does not
-  // repeat the arguments.
+  // Tool calls render once, from toolcall_end, including their arguments.
   assert.match(text, /== tool call read id=call_1\n\s+arguments:\n\s+path: a\.txt/);
-  assert.match(text, /== tool_execution_start read id=call_1 \(args shown at toolcall_end\)/);
-  assert.match(text, /== tool_execution_end read id=call_1 isError=false\n\s+result:/);
 
-  // Covered duplications are acknowledged, not silently dropped.
-  assert.match(text, /-- message_start role=toolResult tool=read id=call_1 \(content covered by tool_execution_end\)/);
-  assert.match(text, /-- agent_end\.messages replays the 2 already-rendered message\(s\); not repeated here/);
-  assert.match(text, /-- 1 tool_execution_update record\(s\) withheld \(covered by the final tool_execution_end result\)/);
-
-  // Final per-message usage, stderr diagnostics, and the terminal record.
-  assert.match(text, /== message_end role=assistant stopReason=stop\n\s+usage:\n\s+inputTokens: 20\n\s+outputTokens: 8\n\s+totalTokens: 28/);
-  assert.match(text, /! stderr: a diagnostic on stderr/);
-  assert.match(text, /== terminal outcome=succeeded exit=0 signal=null/);
-  assert.match(text, new RegExp(`sha256: ${report.hashExpected}`));
-  assert.match(text, /agentSettled: true/);
+  // Launch/session metadata, lifecycle events, tool results, diagnostics, usage,
+  // and terminal evidence remain in the transcript/report, not the body.
+  assert.doesNotMatch(text, /line one|promptSubmitted|message_start|message_end|tool_execution|agent_end|usage|stderr|terminal|sha256|agentSettled/);
 
   // Every assistant answer text appears exactly once.
   assert.equal(text.split("I will read the file.").length - 1, 1);
   assert.equal(text.split("The parser is fine.").length - 1, 1);
 });
 
-test("viewer formatter: unmatched fragments and a capture error surface once and mark the Run INCOMPLETE", { skip: SKIP }, () => {
+test("viewer formatter: unmatched assistant fragments stay visible while capture diagnostics stay out of the body", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-fragmented");
   const entries: Entry[] = [
     launchRecord(1),
@@ -276,18 +267,14 @@ test("viewer formatter: unmatched fragments and a capture error surface once and
   assert.ok(report.integrityReasons.some((r) => r.startsWith("capture-error:")), report.integrityReasons.join("; "));
   assert.ok(report.integrityReasons.some((r) => r.startsWith("sequence-gap:")), report.integrityReasons.join("; "));
 
-  // The withheld fragments are shown once, explicitly unfinished.
-  assert.match(text, /-- unfinished text output \[0\] \(at the terminal record; no completion event was captured\)/);
+  // The withheld output fragment is still shown as assistant text.
+  assert.match(text, /== assistant text\n\s+text: half an answer/);
   assert.match(text, /half an answer/);
   assert.equal(text.split("half an answer").length - 1, 1);
-  // Capture error is visible, and later readable records still render.
-  assert.match(text, /!! capture error: write failed: disk full/);
-  assert.match(text, /== agent_settled/);
-  // A capture error means the terminal outcome is reported but NOT claimed.
-  assert.match(text, /== terminal outcome=incomplete/);
+  assert.doesNotMatch(text, /capture error|agent_settled|terminal outcome/);
 });
 
-test("viewer formatter: raw byte groups are reassembled before decoding, including split multibyte characters", { skip: SKIP }, () => {
+test("viewer formatter: filtered byte-stream events still preserve integrity bookkeeping", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-bytes");
   const line = JSON.stringify({ type: "future_event", text: "你好，世界", n: 1 }) + "\n";
   const bytes = Buffer.from(line, "utf8");
@@ -303,18 +290,16 @@ test("viewer formatter: raw byte groups are reassembled before decoding, includi
   writeBundle(dir, "run-bytes", entries);
   const { report, text } = replay(dir);
 
-  // The split character reassembled intact and the unknown event stayed visible.
-  assert.match(text, /你好，世界/);
-  assert.match(text, /\? \[event future_event\] \{"type":"future_event","text":"你好，世界","n":1\}/);
+  // Unknown events and stream diagnostics do not enter the focused body.
+  assert.doesNotMatch(text, /你好，世界|future_event/);
   assert.equal(text.includes("\uFFFD"), false, "no replacement character may appear for a reassembled character");
 
-  // An unterminated group is reported, not silently dropped.
+  // An unterminated group remains reported through integrity state.
   assert.ok(report.integrityReasons.some((r) => r.startsWith("incomplete byte group gB")), report.integrityReasons.join("; "));
-  assert.match(text, /\? \[incomplete byte group gB: 1 part\(s\), no final part\]/);
-  assert.match(text, /! stderr: boom/);
+  assert.doesNotMatch(text, /incomplete byte group|stderr|boom/);
 });
 
-test("viewer formatter: uncovered tool output, unknown events, malformed lines and foreign versions stay visible", { skip: SKIP }, () => {
+test("viewer formatter: tool output, unknown events, malformed lines and foreign versions stay out of the body", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-fallbacks");
   const entries: Entry[] = [
     launchRecord(1),
@@ -322,25 +307,14 @@ test("viewer formatter: uncovered tool output, unknown events, malformed lines a
     stdoutRecord(3, JSON.stringify({ type: "tool_execution_update", toolCallId: "c9", toolName: "bash", partialResult: { content: [{ type: "text", text: "streamed fragment" }] } }) + "\n"),
     stdoutRecord(4, JSON.stringify({ type: "tool_execution_end", toolCallId: "c9", toolName: "bash", result: { content: [{ type: "text", text: "final result" }] }, isError: true }) + "\n"),
     stdoutRecord(5, JSON.stringify({ type: "future_event", payload: { n: 1 } }) + "\n"),
-    "not json {",                                                     // malformed line: visible, not an integrity failure
+    "not json {",                                                     // malformed line: ignored by the body, not an integrity failure
     stdoutRecord(7, JSON.stringify({ type: "message_update", assistantMessageEvent: { type: "brand_new_delta", contentIndex: 0 } }) + "\n"),
     { ...stdoutRecord(8, JSON.stringify({ type: "session", version: 4, id: "future" }) + "\n"), v: 2 },  // foreign schema version
   ];
   writeBundle(dir, "run-fallbacks", entries);
   const { report, text } = replay(dir);
 
-  // Uncovered intermediate output is shown after the final result; covered
-  // output is withheld with a note.
-  assert.match(text, /-- unmerged intermediate output \[id c9 1\/1\] \(not present in the final result\)\n\s+content: streamed fragment/);
-  assert.match(text, /== tool_execution_end bash id=c9 isError=true/);
-  assert.match(text, /final result/);
-  assert.doesNotMatch(text, /withheld \(covered by the final/);
-
-  // Unknown, malformed and foreign records are lossless, never repaired.
-  assert.match(text, /\? \[event future_event\] \{"type":"future_event","payload":\{"n":1\}\}/);
-  assert.match(text, /\? \[unparsed journal line\] not json \{/);
-  assert.match(text, /\? \[assistant event brand_new_delta\]/);
-  assert.match(text, /\? \[record of unknown schema version 2\]/);
+  assertOnlyInitialInput(text);
   assert.ok(report.integrityReasons.some((r) => r.startsWith("foreign-record-version")), report.integrityReasons.join("; "));
   // Unknown and malformed content alone is not a completeness failure.
   assert.equal(report.integrityReasons.some((r) => r.includes("unparsed") || r.includes("unknown")), false);
@@ -356,7 +330,7 @@ test("viewer formatter: a still-running bundle reports no terminal record withou
   assert.equal(report.token, "RUNNING");
   assert.equal(report.soundDecision, "none");
   assert.deepEqual(report.integrityReasons, ["no-terminal-record"]);
-  assert.match(text, /== agent_start/);
+  assertOnlyInitialInput(text);
 });
 
 test("viewer formatter: the window header exposes Run identity and launch metadata", { skip: SKIP }, () => {
@@ -397,7 +371,7 @@ test("viewer formatter: every terminal class is classified and never claims comp
     assert.equal(report.soundDecision, c.sound, c.outcome);
     assert.equal(report.soundWouldAttempt, true, c.outcome);
     assert.equal(report.integrityOk, true, c.outcome);
-    assert.match(text, new RegExp(`== terminal outcome=${c.outcome} `));
+    assertOnlyInitialInput(text);
   }
 });
 
@@ -456,10 +430,7 @@ test("viewer formatter: an unterminated trailing line waits for more bytes, then
   assert.ok(reasons.includes("trailing-partial-line in stdout"), reasons);
   assert.ok(reasons.includes("trailing-partial-line in journal"), reasons);
   assert.equal(closed.report.token, "INCOMPLETE");
-  assert.match(closed.text, /\? \[partial unterminated stdout line\] \{"type":"message_update"/);
-  assert.match(closed.text, /\? \[partial unterminated journal line\] \{"type":"message_update"/);
-  // Both fragments are shown, each exactly once.
-  assert.equal(closed.text.split("text_del").length - 1, 2);
+  assert.doesNotMatch(closed.text, /text_del|partial unterminated/);
 });
 
 test("viewer formatter: a completed terminal Run releases its bundle for retention", { skip: SKIP }, () => {
@@ -484,13 +455,12 @@ test("viewer formatter: a message that exists only in agent_end is recovered, ne
   ]);
   const { report, text } = replay(dir);
   assert.equal(report.integrityOk, true, report.integrityReasons.join("; "));
-  assert.match(text, /-- 1 assistant message\(s\) appear only in agent_end\.messages; showing them as a recovery/);
-  assert.match(text, /-- recovered assistant message from agent_end\.messages\[0\]\n\s+text: only in agent_end/);
+  assert.match(text, /== assistant text\n\s+text: only in agent_end/);
   // Rendered exactly once: the recovery block, not a second copy of the message.
   assert.equal(text.split("text: only in agent_end").length - 1, 1);
 });
 
-test("viewer formatter: a non-text tool update the final result does not cover stays visible", { skip: SKIP }, () => {
+test("viewer formatter: non-text tool updates stay out of the body", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-nontext-update");
   writeBundle(dir, "run-nontext-update", [
     launchRecord(1),
@@ -505,16 +475,10 @@ test("viewer formatter: a non-text tool update the final result does not cover s
     }) + "\n"),
   ]);
   const { text } = replay(dir);
-  // Content with no text blocks must not be withheld as "covered" just because
-  // its text is empty.
-  assert.match(text, /-- unmerged intermediate output \[id c1 1\/1\]/);
-  assert.match(text, /partialResult:/);
-  assert.match(text, /mimeType: image\/png/);
-  assert.match(text, /progress: 0\.5/);
-  assert.doesNotMatch(text, /withheld \(covered by the final/);
+  assertOnlyInitialInput(text);
 });
 
-test("viewer formatter: a cumulative text update covered by the final result is withheld", { skip: SKIP }, () => {
+test("viewer formatter: tool execution updates and final results stay out of the body", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-cumulative");
   writeBundle(dir, "run-cumulative", [
     launchRecord(1),
@@ -527,8 +491,7 @@ test("viewer formatter: a cumulative text update covered by the final result is 
     }) + "\n"),
   ]);
   const { text } = replay(dir);
-  assert.match(text, /-- 2 tool_execution_update record\(s\) withheld \(covered by the final tool_execution_end result\)/);
-  assert.doesNotMatch(text, /unmerged intermediate output/);
+  assertOnlyInitialInput(text);
 });
 
 test("viewer formatter: a high-volume Run renders every record exactly once", { skip: SKIP }, () => {

@@ -10,11 +10,11 @@
   ------------
   Reads <BundleDir>/transcript.jsonl (Transcript schema v1), replays every
   record already on disk, then tails everything written afterwards by polling
-  the file. Formatted records are appended once, carrying every payload field
-  exactly once: streaming fragments are withheld while the Run is healthy and
-  reconciled into their complete event, so there is no second raw JSON copy.
-  Unknown, malformed, foreign-version, or uncovered content stays visible
-  through explicit lossless fallbacks. Nothing is truncated or summarised away.
+  the file. The transcript remains complete evidence, while the window body is
+  deliberately focused on the initial input, assistant thinking, assistant
+  text, and tool calls.
+  Streaming fragments are withheld and reconciled into their complete event,
+  so each displayed item appears only once.
 
   Evidence vs display
   -------------------
@@ -524,10 +524,9 @@ function Add-RecordExtras {
 # Transcript v1 record model
 # ---------------------------------------------------------------------------
 
-# Recognised wire event types whose payload is rendered in full (never dropped,
-# never summarised). The first group carries the dedup rules of the accepted
-# design; the second is source-confirmed but shape-unverified, so it is
-# rendered generically - lossless, but with no dedup assumptions.
+# Recognised wire event types. Beyond the launch record's initial input, only
+# assistant thinking, assistant text, and toolcall completion events contribute
+# to the body; remaining events still drive bookkeeping and completion state.
 $script:LifecycleTypes = @(
   'session', 'agent_start', 'agent_settled', 'agent_end', 'turn_start', 'turn_end',
   'message_start', 'message_end', 'message_update',
@@ -568,8 +567,6 @@ function New-RunState {
     lineAfterTerminal = $false
     incompleteBlocks  = (New-Object 'System.Collections.Generic.List[object]')
     openBlocks        = @{}
-    toolUpdates       = @{}
-    toolEnded         = @{}
     integrity         = (New-Object 'System.Collections.Generic.List[string]')
     captureError      = $null
     token             = 'RUNNING'
@@ -742,9 +739,19 @@ function Flush-UnfinishedBlocks {
     $block = $State.openBlocks[$key]
     $text = $block.buffer.ToString()
     $State.openBlocks.Remove($key)
-    Add-Line -State $State -Text ('-- unfinished ' + $block.kind + ' output [' + [string]$block.contentIndex + '] (' + $When + '; no completion event was captured)')
-    if ($text.Length -gt 0) {
-      foreach ($seg in $text.Split("`n")) { Add-Line -State $State -Text ('   ' + $seg) }
+    if ($block.kind -eq 'thinking') {
+      Add-Line -State $State -Text '== thinking'
+      Add-TextLines -State $State -Indent '   ' -Label 'text' -Text $text
+    }
+    elseif ($block.kind -eq 'text') {
+      Add-Line -State $State -Text '== assistant text'
+      Add-TextLines -State $State -Indent '   ' -Label 'text' -Text $text
+    }
+    elseif ($block.kind -eq 'toolcall') {
+      Add-Line -State $State -Text ('== tool call ' + [string]$block.toolName)
+      if ($text.Length -gt 0) {
+        foreach ($seg in $text.Split("`n")) { Add-Line -State $State -Text ('   ' + $seg) }
+      }
     }
   }
 }
@@ -791,14 +798,8 @@ function Add-TextLines {
 function Format-LaunchRecord {
   param($State, $Rec)
   $State.launch = $Rec.launch
-  Add-Line -State $State -Text '== launch (process-boundary input recorded by the wrapper)'
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'promptSubmitted' -Value (Get-PropValue -Rec $Rec.launch -Name 'promptSubmitted') -Depth 1
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'promptEffective' -Value (Get-PropValue -Rec $Rec.launch -Name 'promptEffective') -Depth 1
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'cwd' -Value (Get-PropValue -Rec $Rec.launch -Name 'cwd') -Depth 1
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'sessionId' -Value (Get-PropValue -Rec $Rec.launch -Name 'sessionId') -Depth 1
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'constraints' -Value (Get-PropValue -Rec $Rec.launch -Name 'constraints') -Depth 1
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'stdin' -Value (Get-PropValue -Rec $Rec.launch -Name 'stdin') -Depth 1
-  Add-RecordExtras -Lines $State.batch -Rec $Rec.launch -Skip @('promptSubmitted', 'promptEffective', 'cwd', 'sessionId', 'constraints', 'stdin')
+  Add-Line -State $State -Text '== initial input'
+  Add-TextLines -State $State -Indent '   ' -Label 'text' -Text (Format-ScalarText -Value (Get-PropValue -Rec $Rec.launch -Name 'promptSubmitted'))
 
   # The Pi session id from the launch record is not the logical session name
   # (which comes from the manifest); keep it separate.
@@ -826,21 +827,9 @@ function Format-TerminalRecord {
   $signal = Format-ScalarText -Value (Get-PropValue -Rec $t -Name 'signal')
 
   if ($foreign) {
-    Add-Line -State $State -Text ('? [terminal record of unknown schema version ' + (Format-ScalarText -Value (Get-PropValue -Rec $Rec -Name 'v')) + '] ' + (Format-CompactJson -Value $t))
     Add-Integrity -State $State -Reason 'foreign-terminal-version'
     return
   }
-
-  Add-Line -State $State -Text ('== terminal outcome=' + $outcome + ' exit=' + $exitCode + ' signal=' + $signal)
-  foreach ($name in @('startedAt', 'endedAt', 'finalSeq', 'stdoutBytes', 'stderrBytes', 'sawEof', 'sha256', 'piSettlement', 'captureError')) {
-    if (Test-HasProp -Rec $t -Name $name) {
-      Add-ValueLines -Lines $State.batch -Indent '   ' -Label $name -Value (Get-PropValue -Rec $t -Name $name) -Depth 1
-    }
-  }
-  Add-RecordExtras -Lines $State.batch -Rec $t -Skip @(
-    'outcome', 'exitCode', 'signal', 'startedAt', 'endedAt', 'finalSeq',
-    'stdoutBytes', 'stderrBytes', 'sawEof', 'sha256', 'piSettlement', 'captureError'
-  )
 
   $captureError = Get-PropValue -Rec $t -Name 'captureError'
   if ($null -ne $captureError -and -not [string]::IsNullOrEmpty([string]$captureError)) {
@@ -852,12 +841,7 @@ function Format-TerminalRecord {
   $expectedHash = [string](Get-PropValue -Rec $t -Name 'sha256')
   $actualHash = Get-HashHex -State $State
   $State.hashComputed = $actualHash
-  if ([string]::IsNullOrEmpty($actualHash)) {
-    if (-not [string]::IsNullOrEmpty($State.hashError)) {
-      Add-Line -State $State -Text ('-- terminal hash not verified: the viewer could not hash the transcript (' + $State.hashError + ')')
-    }
-  }
-  elseif (-not [string]::IsNullOrEmpty($expectedHash) -and $expectedHash -ne $actualHash) {
+  if (-not [string]::IsNullOrEmpty($actualHash) -and -not [string]::IsNullOrEmpty($expectedHash) -and $expectedHash -ne $actualHash) {
     Add-Integrity -State $State -Reason 'terminal-hash-mismatch'
   }
 }
@@ -867,24 +851,14 @@ function Format-MetaRecord {
   $kind = [string](Get-PropValue -Rec $Rec -Name 'kind')
   switch ($kind) {
     'launch' { Format-LaunchRecord -State $State -Rec $Rec }
-    'state' {
-      $name = Format-ScalarText -Value (Get-PropValue -Rec $Rec -Name 'state')
-      $detail = Get-PropValue -Rec $Rec -Name 'detail'
-      $text = '== state: ' + $name
-      if ($null -ne $detail -and -not [string]::IsNullOrEmpty([string]$detail)) { $text = $text + ' (' + [string]$detail + ')' }
-      Add-Line -State $State -Text $text
-    }
+    'state' { }
     'capture-error' {
       $err = Format-ScalarText -Value (Get-PropValue -Rec $Rec -Name 'error')
-      Add-Line -State $State -Text ('!! capture error: ' + $err)
       if ([string]::IsNullOrEmpty([string]$State.captureError)) { $State.captureError = $err }
       Add-Integrity -State $State -Reason ('capture-error: ' + $err)
-      Add-RecordExtras -Lines $State.batch -Rec $Rec -Skip @('v', 'seq', 'tUtc', 'tMono', 'ch', 'kind', 'error')
     }
     'terminal' { Format-TerminalRecord -State $State -Rec $Rec }
-    default {
-      Add-Line -State $State -Text ('? [meta kind ' + $kind + '] ' + (Format-CompactJson -Value $Rec))
-    }
+    default { }
   }
 }
 
@@ -894,37 +868,10 @@ function Format-MetaRecord {
 
 function Format-SessionEvent {
   param($State, $Evt)
-  Add-Line -State $State -Text ('== session version=' + (Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'version')) + ' id=' + (Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'id')))
-  Add-RecordExtras -Lines $State.batch -Rec $Evt -Skip @('type', 'version', 'id')
 }
 
 function Format-MessageStart {
   param($State, $Evt)
-  $msg = Get-PropValue -Rec $Evt -Name 'message'
-  $role = Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'role')
-  switch ($role) {
-    'user' {
-      # The submitted prompt is echoed here; it is content, so it is rendered.
-      Add-Line -State $State -Text '== message_start role=user'
-      Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'content' -Value (Get-PropValue -Rec $msg -Name 'content') -Depth 1
-      Add-RecordExtras -Lines $State.batch -Rec $msg -Skip @('role', 'content')
-    }
-    'assistant' {
-      # A marker, never a content baseline: the shared mutable partial may
-      # already hold the first delta, so content is rendered from its own
-      # streaming completion events instead (never duplicated here).
-      Add-Line -State $State -Text ('== message_start role=assistant model=' + (Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'model')))
-      Add-RecordExtras -Lines $State.batch -Rec $msg -Skip @('role', 'model', 'content')
-      Add-Line -State $State -Text '-- assistant content is rendered from its completion events below, not repeated here'
-    }
-    'toolResult' {
-      Add-Line -State $State -Text ('-- message_start role=toolResult tool=' + (Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'toolName')) + ' id=' + (Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'toolCallId')) + ' (content covered by tool_execution_end)')
-    }
-    default {
-      Add-Line -State $State -Text ('== message_start role=' + $role)
-      Add-RecordExtras -Lines $State.batch -Rec $msg -Skip @('role')
-    }
-  }
 }
 
 function Format-MessageEnd {
@@ -932,30 +879,8 @@ function Format-MessageEnd {
   $msg = Get-PropValue -Rec $Evt -Name 'message'
   $role = Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'role')
   if ($role -eq 'assistant') {
-    # Authoritative final message metadata and usage; content was already
-    # rendered from its streaming completion events.
     $State.assistantMessagesRendered = $State.assistantMessagesRendered + 1
-    Add-Line -State $State -Text ('== message_end role=assistant stopReason=' + (Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'stopReason')))
-    foreach ($name in @('errorMessage', 'rawStopReason', 'usage', 'timestamp')) {
-      if (Test-HasProp -Rec $msg -Name $name) {
-        Add-ValueLines -Lines $State.batch -Indent '   ' -Label $name -Value (Get-PropValue -Rec $msg -Name $name) -Depth 1
-      }
-    }
-    Add-RecordExtras -Lines $State.batch -Rec $msg -Skip @('role', 'stopReason', 'errorMessage', 'rawStopReason', 'usage', 'timestamp', 'content')
-    Add-Line -State $State -Text ('-- assistant content of this message: ' + [string](Get-TextBlocks -Content (Get-PropValue -Rec $msg -Name 'content')).Count + ' block(s), rendered above')
-    # Content blocks that never received a completion event within this message
-    # are shown once, explicitly unfinished.
     Flush-UnfinishedBlocks -State $State -When 'before this message ended'
-  }
-  elseif ($role -eq 'user') {
-    Add-Line -State $State -Text '-- message_end role=user (content shown at message_start)'
-  }
-  elseif ($role -eq 'toolResult') {
-    Add-Line -State $State -Text '-- message_end role=toolResult (content covered by tool_execution_end)'
-  }
-  else {
-    Add-Line -State $State -Text ('== message_end role=' + $role)
-    Add-RecordExtras -Lines $State.batch -Rec $msg -Skip @('role')
   }
 }
 
@@ -963,9 +888,6 @@ function Format-AssistantSubEvent {
   param($State, $Evt, [string]$RawLine)
   $ame = Get-PropValue -Rec $Evt -Name 'assistantMessageEvent'
   if ($null -eq $ame) {
-    # usage-only update: cumulative and repeated on every delta, so it is
-    # withheld; the authoritative value is shown at message_end.
-    Add-Line -State $State -Text '-- message_update usage (cumulative; final usage is shown at message_end)'
     return
   }
   $type = Format-ScalarText -Value (Get-PropValue -Rec $ame -Name 'type')
@@ -978,9 +900,6 @@ function Format-AssistantSubEvent {
     'thinking_end' {
       $blk = Close-Block -State $State -Kind 'thinking' -ContentIndex $ci -Content (Get-PropValue -Rec $ame -Name 'content') -Source 'thinking_end'
       Add-Line -State $State -Text '== thinking'
-      if (-not $blk.reconciled) {
-        Add-Line -State $State -Text ('-- thinking_end carried no content; showing the withheld fragments unreconciled')
-      }
       Add-TextLines -State $State -Indent '   ' -Label 'text' -Text $blk.text
     }
     'text_start' { [void](Start-Block -State $State -Kind 'text' -ContentIndex $ci -ToolName '') }
@@ -988,9 +907,6 @@ function Format-AssistantSubEvent {
     'text_end' {
       $blk = Close-Block -State $State -Kind 'text' -ContentIndex $ci -Content (Get-PropValue -Rec $ame -Name 'content') -Source 'text_end'
       Add-Line -State $State -Text '== assistant text'
-      if (-not $blk.reconciled) {
-        Add-Line -State $State -Text '-- text_end carried no content; showing the withheld fragments unreconciled'
-      }
       Add-TextLines -State $State -Indent '   ' -Label 'text' -Text $blk.text
     }
     'toolcall_start' {
@@ -1012,114 +928,32 @@ function Format-AssistantSubEvent {
         $callName = Format-ScalarText -Value (Get-PropValue -Rec $call -Name 'name')
         Add-Line -State $State -Text ('== tool call ' + $callName + ' id=' + $id)
         Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'arguments' -Value (Get-PropValue -Rec $call -Name 'arguments') -Depth 1
-        Add-RecordExtras -Lines $State.batch -Rec $call -Skip @('id', 'name', 'arguments')
       }
       else {
-        Add-Line -State $State -Text ('== tool call ' + $name + ' (toolcall_end carried no toolCall object)')
+        Add-Line -State $State -Text ('== tool call ' + $name)
         if ($fragments.Length -gt 0) {
-          Add-Line -State $State -Text '-- unreconciled toolcall fragments:'
           foreach ($seg in $fragments.Split("`n")) { Add-Line -State $State -Text ('   ' + $seg) }
         }
       }
     }
-    default {
-      # Unknown assistant sub-event: visible, lossless, never silently dropped.
-      Add-Line -State $State -Text ('? [assistant event ' + $type + '] ' + $RawLine)
-    }
+    default { }
   }
 }
 
 function Format-ToolStart {
   param($State, $Evt)
-  # args are the same tool-call payload already rendered at toolcall_end.
-  Add-Line -State $State -Text ('== tool_execution_start ' + (Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'toolName')) + ' id=' + (Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'toolCallId')) + ' (args shown at toolcall_end)')
 }
 
 function Format-ToolUpdate {
   param($State, $Evt)
-  # Withheld while healthy; shown after tool_execution_end only for the parts
-  # the final result does not cover. Coverage is decided on the whole
-  # partialResult payload, not just its text: an update whose content carries no
-  # text blocks (images, details-only) is still evidence and must not be
-  # silently dropped as "covered".
-  $id = Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'toolCallId')
-  $partial = Get-PropValue -Rec $Evt -Name 'partialResult'
-  if (-not $State.toolUpdates.ContainsKey($id)) {
-    $State.toolUpdates[$id] = [pscustomobject]@{
-      parts = (New-Object 'System.Collections.Generic.List[object]')
-      shown = $false
-    }
-  }
-  [void]$State.toolUpdates[$id].parts.Add([pscustomobject]@{
-    signature = (Format-CompactJson -Value $partial)
-    text      = (Join-TextBlocks -Content (Get-PropValue -Rec $partial -Name 'content'))
-    payload   = $partial
-  })
 }
 
 function Format-ToolEnd {
   param($State, $Evt)
-  $id = Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'toolCallId')
-  $name = Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'toolName')
-  $isError = Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'isError')
-  Add-Line -State $State -Text ('== tool_execution_end ' + $name + ' id=' + $id + ' isError=' + $isError)
-  Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'result' -Value (Get-PropValue -Rec $Evt -Name 'result') -Depth 1
-  Add-RecordExtras -Lines $State.batch -Rec $Evt -Skip @('type', 'toolCallId', 'toolName', 'result', 'isError', 'args', 'partialResult')
-
-  $finalSignature = Format-CompactJson -Value (Get-PropValue -Rec (Get-PropValue -Rec $Evt -Name 'result') -Name 'content')
-  $finalText = Join-TextBlocks -Content (Get-PropValue -Rec (Get-PropValue -Rec $Evt -Name 'result') -Name 'content')
-  $State.toolEnded[$id] = $true
-  Show-UncoveredToolUpdates -State $State -ToolCallId $id -FinalSignature $finalSignature -FinalText $finalText -Label 'tool_execution_end'
-}
-
-function Show-UncoveredToolUpdates {
-  param($State, [string]$ToolCallId, [string]$FinalSignature, [string]$FinalText, [string]$Label)
-  if (-not $State.toolUpdates.ContainsKey($ToolCallId)) { return }
-  $entry = $State.toolUpdates[$ToolCallId]
-  if ($entry.shown) { return }
-  $entry.shown = $true
-  $covered = 0
-  $uncovered = New-Object 'System.Collections.Generic.List[object]'
-  foreach ($part in $entry.parts) {
-    $text = [string]$part.text
-    $sig = [string]$part.signature
-    # Covered when the final result already carries this content: either its text
-    # (a growing cumulative partial) or its whole payload (identical JSON). An
-    # update with nothing to show at all is covered by definition; one whose
-    # payload is non-text (images, details) is only covered if the JSON matches.
-    $textCovered = (-not [string]::IsNullOrEmpty($text)) -and $FinalText.Contains($text)
-    $sigCovered = (-not [string]::IsNullOrEmpty($sig)) -and $FinalSignature.Contains($sig)
-    $nothingToShow = [string]::IsNullOrEmpty($sig) -and [string]::IsNullOrEmpty($text)
-    if ($textCovered -or $sigCovered -or $nothingToShow) { $covered++ }
-    else { [void]$uncovered.Add($part) }
-  }
-  if ($covered -gt 0) {
-    Add-Line -State $State -Text ('-- ' + [string]$covered + ' tool_execution_update record(s) withheld (covered by the final ' + $Label + ' result)')
-  }
-  for ($i = 0; $i -lt $uncovered.Count; $i++) {
-    $part = $uncovered[$i]
-    Add-Line -State $State -Text ('-- unmerged intermediate output [id ' + $ToolCallId + ' ' + [string]($i + 1) + '/' + [string]$uncovered.Count + '] (not present in the final result)')
-    if (-not [string]::IsNullOrEmpty([string]$part.text)) {
-      Add-TextLines -State $State -Indent '   ' -Label 'content' -Text ([string]$part.text)
-    }
-    else {
-      # No text blocks to show: render the whole payload instead of dropping it.
-      Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'partialResult' -Value $part.payload -Depth 1
-    }
-  }
 }
 
 function Format-TurnEnd {
   param($State, $Evt)
-  $msg = Get-PropValue -Rec $Evt -Name 'message'
-  Add-Line -State $State -Text ('== turn_end stopReason=' + (Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'stopReason')))
-  $tr = Get-PropValue -Rec $Evt -Name 'toolResults'
-  $trCount = 0
-  if ($null -ne $tr) { $trCount = @($tr).Count }
-  Add-Line -State $State -Text ('-- turn_end message and ' + [string]$trCount + ' toolResult(s) covered by the rendered assistant and tool events')
-  if (Test-HasProp -Rec $msg -Name 'usage') {
-    Add-ValueLines -Lines $State.batch -Indent '   ' -Label 'usage' -Value (Get-PropValue -Rec $msg -Name 'usage') -Depth 1
-  }
 }
 
 function Format-AgentEnd {
@@ -1127,9 +961,6 @@ function Format-AgentEnd {
   $msgs = Get-PropValue -Rec $Evt -Name 'messages'
   $count = 0
   if ($null -ne $msgs) { $count = @($msgs).Count }
-  Add-Line -State $State -Text ('== agent_end willRetry=' + (Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'willRetry')) + ' messages=' + [string]$count)
-  Add-RecordExtras -Lines $State.batch -Rec $Evt -Skip @('type', 'messages', 'willRetry')
-
   # Render only the assistant messages this stream did not already account for:
   # agent_end.messages replays already-rendered turns, so a healthy Run repeats
   # them here and nothing is shown again. If fewer assistant messages were
@@ -1140,11 +971,7 @@ function Format-AgentEnd {
     if ((Format-ScalarText -Value (Get-PropValue -Rec $m -Name 'role')) -eq 'assistant') { $assistantTotal++ }
   }
   $missing = $assistantTotal - $State.assistantMessagesRendered
-  if ($missing -le 0) {
-    Add-Line -State $State -Text ('-- agent_end.messages replays the ' + [string]$count + ' already-rendered message(s); not repeated here')
-    return
-  }
-  Add-Line -State $State -Text ('-- ' + [string]$missing + ' assistant message(s) appear only in agent_end.messages; showing them as a recovery')
+  if ($missing -le 0) { return }
   $idx = 0
   $remaining = $missing
   foreach ($m in @($msgs)) {
@@ -1153,7 +980,7 @@ function Format-AgentEnd {
     if ($remaining -le 0) { $idx++; continue }
     $text = Join-TextBlocks -Content (Get-PropValue -Rec $m -Name 'content')
     if (-not [string]::IsNullOrEmpty($text)) {
-      Add-Line -State $State -Text ('-- recovered assistant message from agent_end.messages[' + [string]$idx + ']')
+      Add-Line -State $State -Text '== assistant text'
       Add-TextLines -State $State -Indent '   ' -Label 'text' -Text $text
       $remaining--
     }
@@ -1163,14 +990,11 @@ function Format-AgentEnd {
 
 function Format-GenericEvent {
   param($State, $Evt, [string]$RawLine)
-  Add-Line -State $State -Text ('== ' + (Format-ScalarText -Value (Get-PropValue -Rec $Evt -Name 'type')))
-  Add-RecordExtras -Lines $State.batch -Rec $Evt -Skip @('type')
 }
 
 function Format-StdoutLine {
   param($State, $Line, [string]$RawLine)
   if ([string]::IsNullOrEmpty($Line)) {
-    Add-Line -State $State -Text '-- blank stdout line'
     return
   }
   $evt = $null
@@ -1180,7 +1004,6 @@ function Format-StdoutLine {
   if ($null -ne $evt) { $type = Get-PropValue -Rec $evt -Name 'type' }
   if ($null -eq $evt -or $null -eq $type) {
     $State.lastType = 'unparsed'
-    Add-Line -State $State -Text ('? [unparsed stdout] ' + $Line)
     return
   }
   $type = [string]$type
@@ -1191,18 +1014,15 @@ function Format-StdoutLine {
     return
   }
   if ($script:LifecycleTypes -notcontains $type) {
-    # Unknown type: raw fallback so future Pi events degrade visibly instead of
-    # disappearing. Not an integrity failure - nothing is missing.
-    Add-Line -State $State -Text ('? [event ' + $type + '] ' + $Line)
     return
   }
 
   switch ($type) {
     'session' { Format-SessionEvent -State $State -Evt $evt }
-    'agent_start' { Add-Line -State $State -Text '== agent_start' }
-    'agent_settled' { Add-Line -State $State -Text '== agent_settled' }
+    'agent_start' { }
+    'agent_settled' { }
     'agent_end' { Format-AgentEnd -State $State -Evt $evt }
-    'turn_start' { Add-Line -State $State -Text '== turn_start' }
+    'turn_start' { }
     'turn_end' { Format-TurnEnd -State $State -Evt $evt }
     'message_start' { Format-MessageStart -State $State -Evt $evt }
     'message_end' { Format-MessageEnd -State $State -Evt $evt }
@@ -1217,12 +1037,6 @@ function Format-StdoutLine {
 function Format-StderrLine {
   param($State, $Line, [string]$Channel)
   $State.lastType = $Channel
-  if ($Channel -eq 'stdin') {
-    Add-Line -State $State -Text ('> stdin: ' + $Line)
-  }
-  else {
-    Add-Line -State $State -Text ('! stderr: ' + $Line)
-  }
 }
 
 # ---------------------------------------------------------------------------
@@ -1235,7 +1049,6 @@ function Add-ByteGroupPart {
   param($State, $Rec)
   $bytes = Get-PropValue -Rec $Rec -Name 'bytes'
   if ($null -eq $bytes) {
-    Add-Line -State $State -Text ('? [byte record without payload] ' + (Format-CompactJson -Value $Rec))
     return
   }
   $groupId = Format-ScalarText -Value (Get-PropValue -Rec $bytes -Name 'groupId')
@@ -1245,7 +1058,6 @@ function Add-ByteGroupPart {
   try { $payload = [System.Convert]::FromBase64String([string](Get-PropValue -Rec $bytes -Name 'b64')) }
   catch {
     Add-Integrity -State $State -Reason ('undecodable payload in group ' + $groupId)
-    Add-Line -State $State -Text ('? [undecodable byte payload group ' + $groupId + '] ' + (Format-CompactJson -Value $bytes))
     return
   }
   if (-not $State.groups.ContainsKey($groupId)) {
@@ -1294,7 +1106,7 @@ function Add-ChannelBytes {
 
 # LF (0x0A) can never appear inside a UTF-8 multi-byte sequence, so a native
 # byte search for LF is a safe splitter. Bytes that are not valid UTF-8 (a
-# capture artifact) are displayed as a lossless hex escape instead of U+FFFD.
+# capture artifact) are decoded to a lossless hex escape for downstream parsing.
 function Expand-ChannelLines {
   param($State, [string]$Ch)
   $combined = $State.channels[$Ch].buf
@@ -1351,19 +1163,16 @@ function Process-Record {
   $State.recordCount = $State.recordCount + 1
   if ($null -eq $Rec) {
     $State.lastType = 'unparsed'
-    Add-Line -State $State -Text ('? [unparsed journal line] ' + $Line)
     return
   }
   $version = Get-PropValue -Rec $Rec -Name 'v'
   $seq = Get-PropValue -Rec $Rec -Name 'seq'
   if ($null -eq $version -or $null -eq $seq) {
     Add-Integrity -State $State -Reason 'record-envelope-invalid'
-    Add-Line -State $State -Text ('? [journal record without schema envelope] ' + $Line)
     return
   }
   if ([int]$version -ne 1) {
     Add-Integrity -State $State -Reason ('foreign-record-version: v' + (Format-ScalarText -Value $version))
-    Add-Line -State $State -Text ('? [record of unknown schema version ' + (Format-ScalarText -Value $version) + '] ' + $Line)
     return
   }
   if ($State.terminalSeen) {
@@ -1394,7 +1203,6 @@ function Process-Record {
     Add-ByteGroupPart -State $State -Rec $Rec
     return
   }
-  Add-Line -State $State -Text ('? [channel ' + $ch + ' kind ' + $kind + '] ' + $Line)
 }
 
 # Every complete file line read before the terminal record is hashed exactly as
@@ -1483,12 +1291,6 @@ function Complete-Run {
   param($State)
   Flush-UnfinishedBlocks -State $State -When 'at the terminal record'
   Flush-PartialTails -State $State
-  foreach ($id in @($State.toolUpdates.Keys)) {
-    if (-not $State.toolEnded.ContainsKey($id)) {
-      Add-Line -State $State -Text ('-- no tool_execution_end was captured for id ' + $id + '; intermediate output follows')
-      Show-UncoveredToolUpdates -State $State -ToolCallId $id -FinalSignature '' -FinalText '' -Label 'tool_execution_end'
-    }
-  }
   Update-Token -State $State
   $State.soundDecision = Get-SoundDecision -State $State
   # One attempt per Run: a prior durable alertAttemptedAt suppresses this one.
@@ -1507,20 +1309,17 @@ function Flush-PartialTails {
   foreach ($p in @(Get-PendingPartialBytes -State $State)) {
     if ($p.bytes.Length -gt 0) {
       Add-Integrity -State $State -Reason ('trailing-partial-line in ' + $p.channel)
-      Add-Line -State $State -Text ('? [partial unterminated ' + $p.channel + ' line] ' + (Convert-LineBytes -Bytes $p.bytes))
       $State.channels[$p.channel].buf = (New-Object byte[] 0)
     }
     elseif (-not [string]::IsNullOrEmpty([string]$p.groupId)) {
       Add-Integrity -State $State -Reason ('incomplete byte group ' + [string]$p.groupId)
-      Add-Line -State $State -Text ('? [incomplete byte group ' + [string]$p.groupId + ': ' + [string]$p.parts + ' part(s), no final part]')
     }
   }
   $State.groups = @{}
   $journalTail = Get-UnterminatedJournalBytes -State $State
   if ($null -ne $journalTail -and $journalTail.Length -gt 0) {
     Add-Integrity -State $State -Reason 'trailing-partial-line in journal'
-    Add-Line -State $State -Text ('? [partial unterminated journal line] ' + (Convert-LineBytes -Bytes $journalTail))
-    # Consumed: it is on disk as evidence and has now been displayed once.
+    # Consumed: it remains on disk as evidence but is omitted from the focused body.
     $State.readOffset = $State.readOffset + $journalTail.Length
   }
 }
@@ -1822,7 +1621,6 @@ function Invoke-Tick {
     # the window keeps its in-memory content.
     if (-not $State.sourceCleaned -and -not (Test-Path -LiteralPath $State.transcriptPath)) {
       $State.sourceCleaned = $true
-      Add-Line -State $State -Text '-- source bundle was cleaned by retention; everything above is held in memory'
       Update-StatusBar -State $State
     }
   }
@@ -2153,17 +1951,17 @@ function Invoke-SelfTest {
   Format-StdoutLine -State $state -Line $unknownLine -RawLine $unknownLine
   $probe = [string]::Join("`n", $state.batch.ToArray())
   $state.batch.Clear()
-  if (-not $probe.Contains('? [event future_event] ' + $unknownLine)) {
+  if (-not [string]::IsNullOrEmpty($probe)) {
     $formatterOk = $false
-    $formatterDetail += 'unknown-raw-lost;'
+    $formatterDetail += 'unknown-event-visible;'
   }
   $badLine = 'not json {'
   Format-StdoutLine -State $state -Line $badLine -RawLine $badLine
   $probe = [string]::Join("`n", $state.batch.ToArray())
   $state.batch.Clear()
-  if (-not $probe.Contains('? [unparsed stdout] ' + $badLine)) {
+  if (-not [string]::IsNullOrEmpty($probe)) {
     $formatterOk = $false
-    $formatterDetail += 'malformed-raw-lost;'
+    $formatterDetail += 'malformed-event-visible;'
   }
   # Unfinished fragments must surface once at message_end.
   Format-StdoutLine -State $state -Line $deltaLine -RawLine $deltaLine
@@ -2171,7 +1969,7 @@ function Invoke-SelfTest {
   Format-StdoutLine -State $state -Line $msgEnd -RawLine $msgEnd
   $probe = [string]::Join("`n", $state.batch.ToArray())
   $state.batch.Clear()
-  if (-not $probe.Contains('-- unfinished text output [1]')) {
+  if (($probe -notlike '*== assistant text*') -or ($probe -notlike '*hello world*')) {
     $formatterOk = $false
     $formatterDetail += 'unfinished-fragments-hidden;'
   }
