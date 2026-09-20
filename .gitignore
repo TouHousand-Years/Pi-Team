@@ -2,6 +2,7 @@ node_modules/
 dist/
 docs/
 *.log
+*.gitignore
 
 # Agent-only development documentation and intermediate artifacts
 /.scratch/
