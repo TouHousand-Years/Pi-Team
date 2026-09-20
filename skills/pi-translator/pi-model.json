@@ -1,4 +1,4 @@
 {
-  "model": "qwen3.8-flash",
-  "thinking": "medium"
+  "model": "gpt-5.6-luna",
+  "thinking": "high"
 }

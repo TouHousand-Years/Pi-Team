@@ -1,4 +1,4 @@
 {
-  "model": "deepseek/deepseek-v4.1-flash",
-  "thinking": "high"
+  "model": "gpt-5.6-luna",
+  "thinking": "max"
 }
