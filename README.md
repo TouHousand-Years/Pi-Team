@@ -35,6 +35,20 @@ Add this to your MCP host configuration, using the absolute path to `dist/server
 
 On Windows, use a path such as `C:/Projects/Pi-Team/dist/server.js`. The MCP server keeps the name `pi-subagent` for compatibility.
 
+## Adapted skills
+
+This repository includes five skills under [`skills/`](skills/) that turn the two MCP tools into reusable, checkable workflows. The skills do not add new server tools: they define how the host scopes work, delegates it to Pi, verifies the result and stops safely.
+
+| Skill | Use it for | Main boundary |
+| --- | --- | --- |
+| [`pi-team`](skills/pi-team/SKILL.md) | The shared delegation contract used by the other Pi skills: model selection, prompt composition, file ownership, result collection, concurrency and failure handling. | It supplies transport rules only; the active specialized skill still defines the task, outputs and acceptance criteria. |
+| [`pi-explorer`](skills/pi-explorer/SKILL.md) | Evidence-backed repository investigation, including architecture, tests, recent commits, caches, frontends, concurrency, networking and reproducible failures. | It keeps product files read-only and returns conclusions with paths, line references, commands and explicit evidence gaps. |
+| [`pi-worker`](skills/pi-worker/SKILL.md) | Bounded implementation or repository work with a closed baseline-execute-verify-correct loop. It fits coding, bulk edits, experiments, log analysis and tasks with observable checks. | Pi owns the declared output files; the host reviews them read-only and sends corrections back through another bounded delegation. |
+| [`pi-translator`](skills/pi-translator/SKILL.md) | Long or consequential translations that require complete coverage, stable terminology and preservation of headings, tables, citations, code and formulas. | It translates from explicit source files, uses a glossary when needed and marks unresolved wording instead of silently guessing or omitting content. |
+| [`pi-ultra-planner`](skills/pi-ultra-planner/SKILL.md) | High-leverage implementation plans, trade-off decisions and recovery plans after exploration or experiments have produced a compact evidence brief. | The planner receives text only: it has no tools, network access or write permission, and it never performs the implementation. |
+
+The usual composition is `pi-explorer` for facts, `pi-ultra-planner` for a difficult decision, and `pi-worker` for execution. `pi-translator` is a separate document workflow. All four specialized skills delegate through `pi-team`, which uses only `pi_delegate` and `pi_status`.
+
 ## Delegate a task
 
 Call `pi_delegate`:
