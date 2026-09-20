@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pi Explorer"
+  short_description: "Explore repositories and return evidence-backed findings"
+  default_prompt: "Use $pi-explorer to investigate this repository question and report evidence with paths."

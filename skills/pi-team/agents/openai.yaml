@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pi Team"
+  short_description: "Minimal delegation contract shared by specialized Pi skills"
+  default_prompt: "Use $pi-team to delegate this bounded task under the active specialized Pi skill."

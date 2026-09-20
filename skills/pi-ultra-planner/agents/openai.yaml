@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pi Ultra Planner"
+  short_description: "Use a flagship model to produce a bounded execution plan"
+  default_prompt: "Use $pi-ultra-planner to prepare a compact brief and request a read-only execution plan."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pi Worker"
+  short_description: "Execute bounded tasks through a testable feedback loop"
+  default_prompt: "Use $pi-worker to implement this bounded task and verify it against the stated checks."

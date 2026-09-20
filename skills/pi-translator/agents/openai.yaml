@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pi Translator"
+  short_description: "Translate long documents with consistent terminology"
+  default_prompt: "Use $pi-translator to translate this long document while preserving structure and terminology."
