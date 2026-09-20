@@ -4,6 +4,8 @@ Delegate tasks to the [Pi CLI](https://pi.dev) through MCP, with named sessions,
 
 Based on [guyiicn/pi-subagent](https://github.com/guyiicn/pi-subagent).
 
+If you are using Mattpocock's Skills, try [Matts-Skills-with-Pi-Team](https://github.com/TouHousand-Years/Matts-Skills-with-Pi-Team).
+
 ## Install
 
 Requires Node.js, npm and Pi configured with access to a model provider.
