@@ -222,6 +222,7 @@ test("viewer formatter: healthy Run shows only initial input, thinking, assistan
   assert.equal(report.hashLines, report.records - 1);
   assert.deepEqual(report.errors, []);
   assert.equal(report.session, "sess-name");
+  assert.equal(report.header[0], "Context  28 tokens    input 20  output 8  cache read 0  cache write 0  reasoning 0");
 
   assert.match(text, /== initial input\n\s+text: Fix the parser\.\n\s+text: second line of the submitted prompt/);
 
@@ -333,15 +334,16 @@ test("viewer formatter: a still-running bundle reports no terminal record withou
   assertOnlyInitialInput(text);
 });
 
-test("viewer formatter: the window header exposes Run identity and launch metadata", { skip: SKIP }, () => {
+test("viewer formatter: the upper header exposes context occupancy and Run metadata", { skip: SKIP }, () => {
   const dir = join(tmpDir(), "run-header");
   writeBundle(dir, "run-header-id", [launchRecord(1)], { terminal: "none" });
   const { report } = replay(dir);
-  assert.equal(report.header.length, 4);
-  assert.equal(report.header[0], "Run      run-header-id");
-  assert.match(report.header[1], /^Session  sess-name {4}cwd C:\/work/);
-  assert.match(report.header[2], /constraints=tools=\[bash\] thinking=medium/);
-  assert.equal(report.header[3], "Prompt   Fix the parser.");
+  assert.equal(report.header.length, 5);
+  assert.equal(report.header[0], "Context  unavailable");
+  assert.equal(report.header[1], "Run      run-header-id");
+  assert.match(report.header[2], /^Session  sess-name {4}cwd C:\/work/);
+  assert.match(report.header[3], /constraints=tools=\[bash\] thinking=medium/);
+  assert.equal(report.header[4], "Prompt   Fix the parser.");
 });
 
 test("viewer self-test: Unicode round-trip, font coverage and formatter honesty pass", { skip: SKIP }, () => {

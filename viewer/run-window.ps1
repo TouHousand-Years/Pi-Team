@@ -38,8 +38,8 @@
   the Run. Completed windows stay open until closed by hand.
 
   Read-only by construction: no input, no retry, no terminate. Available
-  interactions are scrolling, selection, copy, select-all, find, and a
-  line-wrap toggle. A reopen request (viewer-request.json) raises the window.
+  interactions are scrolling, selection, and copy. A reopen request
+  (viewer-request.json) raises the window.
 
   Modes
   -----
@@ -578,6 +578,7 @@ function New-RunState {
     soundWouldAttempt = $false
     lastType          = '-'
     assistantMessagesRendered = 0
+    contextUsage      = $null
     batch             = (New-Object 'System.Collections.Generic.List[string]')
     text              = (New-Object System.Text.StringBuilder)
     hash              = $null
@@ -595,7 +596,6 @@ function New-RunState {
     statusIcon        = $null
     statusLabel       = $null
     statusDetail      = $null
-    wrapLabel         = $null
     completed         = $false
     tickBudgetMs      = 250
   }
@@ -665,6 +665,44 @@ function Add-Integrity {
 function Add-Line {
   param($State, [string]$Text)
   [void]$State.batch.Add($Text)
+}
+
+function Get-UsageLong {
+  param($Usage, [string[]]$Names)
+  if ($null -eq $Usage) { return [long]0 }
+  foreach ($name in $Names) {
+    if (Test-HasProp -Rec $Usage -Name $name) {
+      $value = Get-PropValue -Rec $Usage -Name $name
+      if ($null -ne $value) {
+        try { return [long]$value } catch { return [long]0 }
+      }
+    }
+  }
+  return [long]0
+}
+
+function Update-ContextUsage {
+  param($State, $Usage)
+  if ($null -eq $Usage) { return }
+  $input = Get-UsageLong -Usage $Usage -Names @('input', 'inputTokens')
+  $output = Get-UsageLong -Usage $Usage -Names @('output', 'outputTokens')
+  $cacheRead = Get-UsageLong -Usage $Usage -Names @('cacheRead', 'cacheReadTokens')
+  $cacheWrite = Get-UsageLong -Usage $Usage -Names @('cacheWrite', 'cacheWriteTokens')
+  $reasoning = Get-UsageLong -Usage $Usage -Names @('reasoning', 'reasoningTokens')
+  $total = Get-UsageLong -Usage $Usage -Names @('totalTokens', 'total')
+  if ($total -le 0) { $total = $input + $output + $cacheRead + $cacheWrite }
+  # Streaming updates begin with zero-valued placeholders. Keep the last real
+  # occupancy visible until a newer non-zero usage snapshot arrives.
+  if ($total -le 0) { return }
+  $State.contextUsage = [pscustomobject]@{
+    total = $total
+    input = $input
+    output = $output
+    cacheRead = $cacheRead
+    cacheWrite = $cacheWrite
+    reasoning = $reasoning
+  }
+  Update-Header -State $State
 }
 
 function Format-ConstraintsText {
@@ -872,11 +910,14 @@ function Format-SessionEvent {
 
 function Format-MessageStart {
   param($State, $Evt)
+  $msg = Get-PropValue -Rec $Evt -Name 'message'
+  Update-ContextUsage -State $State -Usage (Get-PropValue -Rec $msg -Name 'usage')
 }
 
 function Format-MessageEnd {
   param($State, $Evt)
   $msg = Get-PropValue -Rec $Evt -Name 'message'
+  Update-ContextUsage -State $State -Usage (Get-PropValue -Rec $msg -Name 'usage')
   $role = Format-ScalarText -Value (Get-PropValue -Rec $msg -Name 'role')
   if ($role -eq 'assistant') {
     $State.assistantMessagesRendered = $State.assistantMessagesRendered + 1
@@ -886,6 +927,7 @@ function Format-MessageEnd {
 
 function Format-AssistantSubEvent {
   param($State, $Evt, [string]$RawLine)
+  Update-ContextUsage -State $State -Usage (Get-PropValue -Rec $Evt -Name 'usage')
   $ame = Get-PropValue -Rec $Evt -Name 'assistantMessageEvent'
   if ($null -eq $ame) {
     return
@@ -1510,6 +1552,12 @@ function Get-HeaderLines {
     if ($submitted.Length -gt 120) { $submitted = $submitted.Substring(0, 120) + [string][char]0x2026 }
   }
   $lines = New-Object 'System.Collections.Generic.List[string]'
+  $context = 'Context  unavailable'
+  if ($null -ne $State.contextUsage) {
+    $u = $State.contextUsage
+    $context = 'Context  ' + [string]$u.total + ' tokens    input ' + [string]$u.input + '  output ' + [string]$u.output + '  cache read ' + [string]$u.cacheRead + '  cache write ' + [string]$u.cacheWrite + '  reasoning ' + [string]$u.reasoning
+  }
+  [void]$lines.Add($context)
   [void]$lines.Add('Run      ' + $State.runId)
   [void]$lines.Add('Session  ' + $State.session + '    cwd ' + $State.cwd + '    started ' + $State.startedAtUtc)
   [void]$lines.Add('Launch   sessionId=' + $sessionId + '  stdin=' + $stdin + '  constraints=' + $constraints)
@@ -1661,49 +1709,6 @@ function Invoke-Tick {
 
 $script:viewerErrors = New-Object 'System.Collections.Generic.List[string]'
 
-function Show-FindDialog {
-  param($State)
-  $rtb = $State.rtb
-  if ($null -eq $rtb) { return }
-  $dlg = New-Object System.Windows.Forms.Form
-  $dlg.Text = 'Find (read-only)'
-  $dlg.ClientSize = New-Object System.Drawing.Size(360, 96)
-  $dlg.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
-  $dlg.MaximizeBox = $false
-  $dlg.MinimizeBox = $false
-  $dlg.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
-  $box = New-Object System.Windows.Forms.TextBox
-  $box.Location = New-Object System.Drawing.Point(12, 12)
-  $box.Width = 336
-  $btn = New-Object System.Windows.Forms.Button
-  $btn.Text = 'Find next'
-  $btn.Location = New-Object System.Drawing.Point(252, 46)
-  $btn.Width = 96
-  $info = New-Object System.Windows.Forms.Label
-  $info.Location = New-Object System.Drawing.Point(12, 50)
-  $info.Width = 230
-  $info.Text = 'Searches the rendered text.'
-  $doFind = {
-    $needle = $box.Text
-    if ([string]::IsNullOrEmpty($needle)) { return }
-    $from = $rtb.SelectionStart + $rtb.SelectionLength
-    if ($from -ge $rtb.TextLength) { $from = 0 }
-    $idx = $rtb.Text.IndexOf($needle, $from, [System.StringComparison]::Ordinal)
-    if ($idx -lt 0 -and $from -gt 0) { $idx = $rtb.Text.IndexOf($needle, 0, [System.StringComparison]::Ordinal) }
-    if ($idx -lt 0) { $info.Text = 'No match.'; return }
-    $rtb.Select($idx, $needle.Length)
-    $rtb.ScrollToCaret()
-    $info.Text = 'Match at offset ' + [string]$idx + '.'
-  }
-  $btn.Add_Click($doFind)
-  $box.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Return) { & $doFind } })
-  [void]$dlg.Controls.Add($box)
-  [void]$dlg.Controls.Add($btn)
-  [void]$dlg.Controls.Add($info)
-  [void]$dlg.ShowDialog($State.form)
-  $dlg.Dispose()
-}
-
 function New-RunForm {
   param($State)
   $form = New-Object System.Windows.Forms.Form
@@ -1742,40 +1747,15 @@ function New-RunForm {
 
   $header = New-Object System.Windows.Forms.Label
   $header.Dock = [System.Windows.Forms.DockStyle]::Top
-  $header.Height = 74
+  $header.Height = 92
   $header.Padding = New-Object System.Windows.Forms.Padding(8, 4, 8, 4)
   $header.BackColor = [System.Drawing.Color]::FromArgb(244, 244, 244)
   $header.Font = New-Object System.Drawing.Font('Consolas', 9)
   $header.Text = 'Run      ' + $State.runId
 
-  $menu = New-Object System.Windows.Forms.MenuStrip
-  $editMenu = New-Object System.Windows.Forms.ToolStripMenuItem('Edit')
-  $copyItem = New-Object System.Windows.Forms.ToolStripMenuItem('Copy')
-  $copyItem.ShortcutKeys = [System.Windows.Forms.Keys]::Control -bor [System.Windows.Forms.Keys]::C
-  $copyItem.Add_Click({ $State.rtb.Copy() })
-  $allItem = New-Object System.Windows.Forms.ToolStripMenuItem('Select all')
-  $allItem.ShortcutKeys = [System.Windows.Forms.Keys]::Control -bor [System.Windows.Forms.Keys]::A
-  $allItem.Add_Click({ $State.rtb.SelectAll() })
-  $findItem = New-Object System.Windows.Forms.ToolStripMenuItem('Find...')
-  $findItem.ShortcutKeys = [System.Windows.Forms.Keys]::Control -bor [System.Windows.Forms.Keys]::F
-  $findItem.Add_Click({ Show-FindDialog -State $State })
-  [void]$editMenu.DropDownItems.Add($copyItem)
-  [void]$editMenu.DropDownItems.Add($allItem)
-  [void]$editMenu.DropDownItems.Add($findItem)
-  $viewMenu = New-Object System.Windows.Forms.ToolStripMenuItem('View')
-  $wrapItem = New-Object System.Windows.Forms.ToolStripMenuItem('Line wrap')
-  $wrapItem.CheckOnClick = $true
-  $wrapItem.Checked = $false
-  $wrapItem.Add_Click({ $State.rtb.WordWrap = $wrapItem.Checked })
-  [void]$viewMenu.DropDownItems.Add($wrapItem)
-  [void]$menu.Items.Add($editMenu)
-  [void]$menu.Items.Add($viewMenu)
-
   [void]$form.Controls.Add($rtb)
   [void]$form.Controls.Add($status)
   [void]$form.Controls.Add($header)
-  [void]$form.Controls.Add($menu)
-  $form.MainMenuStrip = $menu
 
   $State.form = $form
   $State.rtb = $rtb
