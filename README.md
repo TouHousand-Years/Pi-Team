@@ -39,7 +39,7 @@ On Windows, use a path such as `C:/Projects/Pi-Team/dist/server.js`. The MCP ser
 
 ## Adapted skills
 
-This repository includes five skills under [`skills/`](skills/) that turn the two MCP tools into reusable, checkable workflows. The skills do not add new server tools: they define how the host scopes work, delegates it to Pi, verifies the result and stops safely.
+This repository includes five skills under [`skills/`](skills/) that turn the two MCP tools into reusable, checkable workflows. The skills define how the host scopes work, delegates it to Pi, verifies the result and stops safely.
 
 | Skill | Use it for | Main boundary |
 | --- | --- | --- |
