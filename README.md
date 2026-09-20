@@ -1,8 +1,8 @@
 # Pi-Team
 
-Delegate coding tasks to the [Pi CLI](https://pi.dev) through MCP, with named sessions, sync/async execution and a read-only transcript window on Windows.
+Delegate tasks to the [Pi CLI](https://pi.dev) through MCP, with named sessions, sync/async execution and a read-only transcript window on Windows.
 
-Based on [guyiicn/pi-subagent](https://github.com/guyiicn/pi-subagent). [MIT License](LICENSE).
+Based on [guyiicn/pi-subagent](https://github.com/guyiicn/pi-subagent).
 
 ## Install
 
