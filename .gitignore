@@ -1,11 +1,11 @@
 node_modules/
 dist/
+docs/
 *.log
 
 # Agent-only development documentation and intermediate artifacts
 /.scratch/
 /AGENTS.md
 /CONTEXT.md
-/docs
 /.agents/
 /.codex/
